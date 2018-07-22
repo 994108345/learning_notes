@@ -14,19 +14,14 @@ List:
 List根据equals判断是否相等是和普通类型是不一样的。
 Set:
 	HashSet:是最快的获取元素方式，不关心元素的顺序
-		看HashSet的add方法原码：
-private transient HashMap<E,Object> map;
-private static final Object PRESENT = new Object();
-public boolean add(E e) {
-        return map.put(e, PRESENT)==null;
-}
-Set内部实现是通过map存值，且添加的对象当做map的key，value为创建的一个Object类型的PRESENT。
-
+		Set内部实现是通过哈希函数实现存值，所以读取很快。
+		可以存null。
 	TreeSet：关心元素的顺序，是使用TreeSet，按照结果的升序保存对象
 	LinkedHashSet：按照被添加的顺序保存对象
 
 Map:
 	HashMap:提供了最快的查找技术，
+		键和值都允许null。
 	TreeMap:按照比较结果升序保存键，
 	LinkedHashMap:按照插入顺序保存键，同时还保留了HashMap的查询速度。
 
