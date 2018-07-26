@@ -89,10 +89,26 @@ public class ErasedTypeEquivalence {
 }
 输出结果：true;
 
+
 在泛型内部。无法获得任何有关泛型参数类型的信息。
 java泛型是使用擦除来实现的，使用泛型时，任何具体的类型信息都被擦除了。	
 
-<T extends Hasf>//extend是的意思将T擦除为Hasf，即Hasf替换了T类型。
+public class Hasf {
+    public void f(){
+        System.out.println("Hasf.f()");
+    }
+}
+class Manipulator2<T extends Hasf>{  //extend是的意思将T擦除为Hasf，即Hasf替换了T类型。
+    private T  obj;
+
+    public Manipulator2(T obj) {
+        this.obj = obj;
+    }
+    public void manipulate(){
+        obj.f();
+    }
+}
+<T extends Hasf>，extend是的意思将T擦除为Hasf，即Hasf替换了T类型。这样java才能在编译时识别泛型代表的类型，从而使用obj.f()方法。
 这就是泛型的其中一个边界。
 擦除减少 了java泛型的泛化性。因为泛型是jdk1.5才出现的，所以擦除是java解决泛型最好的折中的办法。
 擦除主要的政党路由是从非泛化代码到泛化代码的转变过程，以及在不破坏现有类库的情况下，将泛型融入了java语言。

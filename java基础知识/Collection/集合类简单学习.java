@@ -95,4 +95,11 @@ Collections
 	nCopy（int num;object object）；创建指定数量的集合
 	fill():用一个对象替换目标集合中的所有对象
 	
+线程安全的集合类：
+vector
+stack
+栈
+HashTable
+concurrentHashMap
+	
 
