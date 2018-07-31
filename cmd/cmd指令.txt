@@ -1,0 +1,5 @@
+1.查看所有已经被占用的端口
+	netstat -an
+
+2.查询某个端口是否被占用
+	netstat -a|findstr 3306

@@ -1,0 +1,18 @@
+1.规定使用dubbo不是一定要zoomkepper等服务器，没有服务器，dubbo自己也可以运行。
+
+2.Duplicate spring bean id dubboProviderServiceImpl
+	bean重复了，看看id啥的是不是重名了！
+3.配置时，provider的ref是依赖spring的servic。
+		consumer的id是自己随便取的但要唯一的名字。
+		
+4.要下载zoomkeeper服务器，进入bin文件运行zkServer.sh。
+在启动前有一些配置文件需要修改一下。
+Zookeeper的配置文件在 conf 目录下，这个目录下有 zoo_sample.cfg 和 log4j.properties，你需要做的就是将zoo_sample.cfg 改名为 zoo.cfg，因为 Zookeeper在启动时会找这个文件作为默认配置文件。下面详细介绍一下，这个配置文件中各个配置项的意义。
+ •tickTime：这个时间是作为Zookeeper 服务器之间或客户端与服务器之间维持心跳的时间间隔，也就是每个 tickTime 时间就会发送一个心跳。
+
+ •dataDir：顾名思义就是 Zookeeper保存数据的目录，默认情况下，Zookeeper 将写数据的日志文件也保存在这个目录里。
+
+ •dataLogDir：顾名思义就是Zookeeper 保存日志文件的目录
+
+ •clientPort：这个端口就是客户端连接Zookeeper 服务器的端口，Zookeeper 会监听这个端口，接受客户端的访问请求
+ 
