@@ -1,0 +1,4 @@
+mybatis的update语句的返回值
+其实返回值的sql匹配的值，而不是修改的值，如果要返回的是修改的值，
+需要在jdbc的url中配置下列信息
+jdbc:mysql://${jdbc.host}/${jdbc.db}?useAffectedRows=true

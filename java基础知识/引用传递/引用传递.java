@@ -47,7 +47,8 @@ public void demo1(){
 	Demo demo4 = new Demo();
 	demo4.setName("4");
 	objList.add(demo1);objList.add(demo2);objList.add(demo3);objList.add(demo4);
-	for (int i = 0; i < objList.size(); i++) {
+	for (int i = 0; i < objList.size(); i++) {<!--保存从middle传来的主数据接口-->
+    <dubbo:service interface="com.mtsbw.wms.app.api.UpdateMainDataFromMiddleService" group="${dubbo.group.wms}" provider="wmsProvider" ref="bfOrgService"/>
 		Demo demo = objList.get(i);
 		System.out.println(demo.getName());
 		demo.setName("111");
@@ -56,6 +57,24 @@ public void demo1(){
 }
 以上代码可知，其他非基础类型都是引用传递。
 
+String a = new String("abc"); String b = new String("abc"); ，则判断 a==b 的值为false，因为分别为a和b创建了新对象。
+
+list的引用传递
+		List list = new ArrayList();
+        list.add("1");
+        list.add("2");
+        list.add("3");
+        list.add("4");
+        Map map  = new HashMap<>();
+        map.put("list",list);
+
+        List firstList = (List)map.get("list");
+        List updateList = firstList.subList(0,2);
+        map.put("list",updateList);
+        System.out.println(firstList);
+		输出结果：[1, 2, 3, 4]
+	由上可知，firstList没有变
+我们重新给map的key=list赋值时，此时重新划分了一块内存来存list，而不是让原来的list引用等于updateList的引用。
 
 
 

@@ -1,4 +1,4 @@
-11 
+11
 RTTI：运行阶段类型识别(Runtime Type Identification)的简称
 jaa使用Class对象来执行其RTTI。
 每个类都有一个Class对象。为了生成这个了的对象，运行这个额程序的虚拟机，将使用被称为“类加载器”的子系统。

@@ -3,3 +3,6 @@
 
 2.查询某个端口是否被占用
 	netstat -a|findstr 3306
+
+3.查看本机端口号
+	ipconfig /all

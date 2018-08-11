@@ -16,3 +16,7 @@ Zookeeper的配置文件在 conf 目录下，这个目录下有 zoo_sample.cfg �
 
  •clientPort：这个端口就是客户端连接Zookeeper 服务器的端口，Zookeeper 会监听这个端口，接受客户端的访问请求
  
+5.调用dubbo的方式
+	代码调用：
+		
+	通过调度服务调用：
