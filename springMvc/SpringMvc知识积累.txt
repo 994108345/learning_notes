@@ -1,0 +1,12 @@
+@ResponseBody和@ResquestBody注解的作用
+
+	1.@ResponseBody注解作用：
+		该注解作用于将Controller的方法返回的对象，通过适当的HttpMessageConverter转换为制定格式后，写入到Response对象的body数据区，
+
+		使用情况：返回的数据不是Html标签的页面，而是其他数据格式的数据时，（如Json、xml等）使用；
+
+	2.@ResquestBody注解作用：
+		该注解用于读取Resquest请求的body部分数据，使用系统默认的HttpMseeageConverter进行解析，然后把相应的数据绑定要返回的对象上，再把HttpMseeageConverter返回的对象数据绑定到Controller中方法的参数上
+		只有在request url的参数是json类型的时候才用
+		@RequestBody需要把所有请求参数作为json解析
+		1、@requestBody注解常用来处理content-type不是默认的application/x-www-form-urlcoded编码的内容，比如说：application/json或者是application/xml等。一般情况下来说常用其来处理application/json类型。

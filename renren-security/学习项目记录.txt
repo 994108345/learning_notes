@@ -1,0 +1,15 @@
+renren-security
+
+登录模块
+	
+	使用了Shiro框架
+	
+	验证码：使用了goole的Constants工具类
+	
+	表：sys_user
+		有状态字段，可禁用账号。
+		主键为user_id,无外键，索引为username
+		
+		权限管理：围绕着角色（role）！不是user
+
+	

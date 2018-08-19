@@ -1,0 +1,61 @@
+spring-boot整合mybatis
+	父项目加入父模块引用
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.0.0.RELEASE</version>
+		<relativePath/>
+	</parent>
+	<properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+    </properties>
+	<!--spring boot-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <!--spring boot整合mybatis-->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <!--spring-boot-test-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <!--mysql数据库-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.35</version>
+        </dependency>
+		配置文件：appication.yml
+		server:
+		  port: 8080
+		logging:
+		#  config: classpath:logback.xml
+		  path: D:\log
+		#配置数据源
+		spring:
+		  datasource:
+			url: jdbc:mysql://localhost:3306/studybootdo
+			username: root
+			password: bobo
+			driver-class-name: com.mysql.jdbc.Driver
+		mybatis:
+		  typeAliasesPackage: cn.wzl.studybootdo.model       #实体bean包
+		  mapperLocations: classpath:cn/wzl/studybootdo/dao/**/mapper/*Mapper.xml   #映射文件存放地址
+		

@@ -1,0 +1,7 @@
+js
+
+	数组
+		
+		删除
+		
+			arr.splice(begin,num);删除数组中从begin开始的num个元素。例：let arr = [1,2,3,4],arr.splice(1,1);即2被删除了！ 

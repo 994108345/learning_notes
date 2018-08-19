@@ -1,0 +1,274 @@
+简介：是key-value数据库，也是非关系型数据库。简称nosql
+
+启动redis:
+
+	打来一个命令窗口，在redis安装的文件夹内：执行：redis-server.exe redis.windows.conf不要关闭这个窗口
+	打来另外一个命令窗口：同样进入redis安装的文件夹内；执行redis-cli,xex -h 127.0.0.1 -p 6379
+	
+redis的数据类型
+	String字符串：SET name "abc" 。get name
+	Hash哈希:适合存放对象：hmset myhash user1 "111" user2 "222"。hget myhash user1
+	List列表:lpush list_name param; lrange list_name 0 3；插入是栈结构，最晚进去的再栈顶也就是0！
+	Set集合：String类型的无序集合,集合内元素是唯一的。sadd set_name param ; smembers set_name;
+	zset：sorted set有序集合。和set一样是string类型的元素集合，也不允许出现重复值。不同的是每个元素会关联一个double类型的分数，redis是通过这些分数来为集合的成员进行从大到小的排序。zadd zset_name 0 param; ZRANGEBYSCORE zset_name 0 1000;
+	
+键（keys）命令
+	DEL key；删除键，删除成功返回(integer) 1，错误返回(integer) 0;
+	DUMP key :序列化给点的key，并返回被序列化的值。
+	EXISTS key;检查给定key是否存在。是返回(integer) 1，不是返回(integer) 0;
+	EXPIRE key time设置了过期时间，特定时间后key会自动被删除，时间单位是秒
+	EXPIRE key timestamp;效果和expire一样，只是这个是时间戳。
+	PEXPIRE key milliseconds;设置key的过期时间以毫秒计。
+	PEXPIREAT key milliseconds-timestamp:设置过期时间以时间戳以毫秒计。
+	KEYS pattern:查找所有渡河给定模式（pattern）的key；
+	MOVE key db:将数据库的key移到给定数据库的key
+	PERSIST key;移除key的过期时间，key将持久保持
+	PTTL key;以毫秒为单位返回key的剩余的过期时间。
+	TTL key;以秒为单位，返回给定key的剩余生存时间
+	RANDOMKEY：从当前数据库随机返回一个key；
+	RENAME key newkey;修改key的名称
+	RENAMENX key newkey;仅当newkey不存在时，将key改名为newkey。
+	TYPE key：犯规key所存储的值类型。
+	
+字符串（String）命令
+	SET key_name valuse;设置指定key的值
+	Get key_name; 获取指定key的值
+	GETRANGE key_name start end;返回子字符串的字符；第几个字符到第几个字符包前也包后！
+	GETSET key_name value:将给定 key 的值设为 value ，并返回 key 的旧值(old value)。
+	GETBIT key offset:对 key 所储存的字符串值，获取指定偏移量上的位(bit)。不存在bit则返回0；
+	MGET key1 key2..；获取所有(一个或多个)给定 key 的值。
+	SETBIT key offset value：对 key 所储存的字符串值，设置或清除指定偏移量上的位(bit)。（）
+	SETNX key value;只有当key不存在时才会设置值。
+	SETRANGE key offset value：用 value 参数覆写给定 key 所储存的字符串值，从偏移量 offset 开始。
+	STRLEN key_name;返回 key 所储存的字符串值的长度。
+	MSET key1 value1 key2 value2;设置多个键值对
+	MSETNX key1 value1 key2 value2：同时设置一个或多个 key-value 对，当且仅当所有给定 key 都不存在。
+	PSETEX key milliseconds value：创建一个有生存时间的key，这个命令和 SETEX 命令相似，但它以毫秒为单位设置 key 的生存时间。
+	INCR key：将 key 中储存的数字值增一。
+	INCRBY key increment：将 key 所储存的值加上给定的增量值（increment） 。
+	INCRBYFLOAT key increment：将 key 所储存的值加上给定的浮点增量值（increment） 。
+	DECR key：将 key 中储存的数字值减一。
+	DECRBY key decrement：key 所储存的值减去给定的减量值（decrement） 。
+	APPEND key value：如果 key 已经存在并且是一个字符串， APPEND 命令将 指定value 追加到改 key 原来的值（value）的末尾。如果key不存在，则APPEND的作用只是创建一个key，并把值value赋予。
+	
+哈希（Hash）命令
+	HDEL key field1 field2...;删除一个或多个哈希字段
+	HEXISTS key field; 查看哈希表key中，是否存在field字段
+	HGET key field:或许key哈希表的field字段。
+	HGETALL key:获取哈希表key 的所有字段和值
+	HINCRBY key fiels increment:为哈希表key中的指定字段的整数值加上增量increment。
+	HINCREBYFLOAT key field increment:为哈希表key中 指定字段的浮点数值加上增量
+	HKEYS key;获取哈希表key中的所有字段的值。
+	HLEN key;获取key哈希表的字段的数量；
+	HMGET key field1 field2：获取给定字段的值。
+	HMSET key field1 value field2 value2：给hash对象设置多个字段
+	HSET key field value：将key中的字段field设置为value；
+	HSETNX key field value；只有在字段field不存在时，才设置field的值。没有key对象则创建对象再赋值。
+	HVALS key：获取哈希表中的所有值。
+	HSCAN key cursor [Match pattern][Count count]:迭代哈希表中的键值对。
+	
+列表（List）命令
+	每个列最多2^32 -1个元素。每个列表超过40亿个元素。
+	BLPOP key1 key2 .. timeout:移出并获取列表的第一个元素。如果没有元素，会阻塞列表直到等待超时或可弹出元素为止。
+	BRPOP key1 key2... timeout:移出并获取列表的最后一个元素。如果没有元素，会阻塞列表直到等待超时或可弹出元素为止。
+	BRPOPLPUSH source destination timeout:从列表中弹出一个值，将弹出的元素插入到另外一个列表中并返回它； 如果列表没有元素会阻塞列表直到等待超时或发现可弹出元素为止。
+	LINDEX key index;通过索引获取列表中的元素。使用负数为小标的话-1为倒数第一个，-2是倒数第二个以此类推。顺数第一从0开始。切记list是栈的结构，后进的在栈顶是0
+	LINSERT key BEFORE|AFTER pivot value ：在列表的元素前或者后插入元素
+	LLEN key：获取列表长度
+	LPOP key：移出并获取列表的第一个元素
+	LPUSH key value1 value2 value3
+	LPUSHX key value:将一个值插入到已存在的列表头部。不存在则不插入
+	LRANGE key start stop ：获取列表指定范围内的元素
+	LREM key count value;移出列表元素。count 和value要匹配
+	LSET key index value：通过索引设置列表元素的值。
+	LTRIM key start stop ：对一个列表进行修剪(trim)，就是说，让列表只保留指定区间内的元素，不在指定区间之内的元素都将被删除。
+	RPOP key：移除并获取列表最后一个元素
+	RPOP key：移除并获取列表最后一个元素
+	RPUSH key value1 [value2] ：在列表中添加一个或多个值
+	RPUSHX key value： 为已存在的列表添加值
+	
+集合（Set）命令
+
+	无序集合，集合成员是唯一的。通过哈希表实现的，所以添加删除查找的复杂度都是O（1）
+		sadd key member,member2...:添加一个或多个成员
+		scard key:获取集合成员的数目；
+		SDIFF key1 key2...."返回所有集合的差集：
+		SDIFFSTORE destination key1 [key2] ：返回给定所有集合的差集并存储在 destination 中
+		SINTER key1 [key2]：返回给定所有集合的交集
+		SINTERSTORE destination key1 [key2]：返回给定所有集合的交集并存储在 destination 中
+		SISMEMBER key member： 判断 member 元素是否是集合 key 的成员
+		SMEMBERS key ：返回集合中的所有成员
+		SMOVE source destination member：将 member 元素从 source 集合移动到 destination 集合
+		SPOP key ：移除并返回集合中的一个随机元素
+		SRANDMEMBER key [count] ：返回集合中一个或多个随机数
+		SREM key member1 [member2] ：移除集合中一个或多个成员
+		SUNION key1 [key2]：返回所有给定集合的并集
+		SUNIONSTORE destination key1 [key2]：所有给定集合的并集存储在 destination 集合中
+		SSCAN key cursor [MATCH pattern] [COUNT count]：迭代集合中的元素
+	
+	有序集合（sorted set）命令
+		有序集合和集合一样也是string类型元素的集合,且不允许重复的成员。不同的是每个元素都会关联一个double类型的分数。redis正是通过分数来为集合中的成员进行从小到大的排序。有序集合的成员是唯一的,但分数(score)却可以重复。
+		ZADD key score1 member1 [score2 member2] :向有序集合添加一个或多个成员，或者更新已存在成员的分数
+		ZCARD key:获取有序集合的成员数
+		ZCOUNT key min max:计算在有序集合中指定区间分数的成员数
+		ZINCRBY key increment member :有序集合中对指定成员的分数加上增量 increment
+		ZINTERSTORE destination numkeys key [key ...]: 计算给定的一个或多个有序集的交集并将结果集存储在新的有序集合 key 中
+		ZLEXCOUNT key min max:在有序集合中计算指定字典区间内成员数量
+		ZRANGE key start stop [WITHSCORES]:通过索引区间返回有序集合成指定区间内的成员
+		ZRANGEBYLEX key min max [LIMIT offset count]:通过字典区间返回有序集合的成员
+		ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT] :通过分数返回有序集合指定区间内的成员
+		ZRANK key member ：返回有序集合中指定成员的索引
+		ZREM key member [member ...] ：移除有序集合中的一个或多个成员
+		ZREMRANGEBYLEX key min max ：移除有序集合中给定的字典区间的所有成员
+		ZREMRANGEBYRANK key start stop： 移除有序集合中给定的排名区间的所有成员
+		ZREMRANGEBYSCORE key min max ：移除有序集合中给定的分数区间的所有成员
+		ZREVRANGE key start stop [WITHSCORES] ：返回有序集中指定区间内的成员，通过索引，分数从高到底
+		ZREVRANGEBYSCORE key max min [WITHSCORES] ：返回有序集中指定分数区间内的成员，分数从高到低排序
+		ZREVRANK key member ：返回有序集合中指定成员的排名，有序集成员按分数值递减(从大到小)排序
+		ZSCORE key member :返回有序集中，成员的分数值
+		ZUNIONSTORE destination numkeys key [key ...] :计算给定的一个或多个有序集的并集，并存储在新的 key 中
+		ZSCAN key cursor [MATCH pattern] [COUNT count] :迭代有序集合中的元素（包括元素成员和元素分值）
+		HyperLogLog
+		统计基数的算法。计算空间固定12kb。只根据谁的元素计算基数，而不会存储元素本身，所以 HyperLogLog 不能像集合那样，返回输入的各个元素。
+		基数就是不重复的数的个数
+		PFADD key element [element ...] :添加指定元素到 HyperLogLog 中。
+		PFCOUNT key [key ...] :返回给定 HyperLogLog 的基数估算值。
+		PFMERGE destkey sourcekey [sourcekey ...]:将多个 HyperLogLog 合并为一个 HyperLogLog
+		发布订阅(pub/sub)
+		创建频道：subscribe 频道名字
+		PSUBSCRIBE pattern [pattern ...] :订阅一个或多个符合给定模式的频道。
+		PUBSUB subcommand [argument [argument ...]] :查看订阅与发布系统状态。
+		PUBLISH channel message:将信息发送到指定的频道。
+		PUNSUBSCRIBE [pattern [pattern ...]]:退订所有给定模式的频道。
+		SUBSCRIBE channel [channel ...] :订阅给定的一个或多个频道的信息。
+		UNSUBSCRIBE [channel [channel ...]]:指退订给定的频道。
+		
+事务：
+	批量操作在发送 EXEC 命令前被放入队列缓存。
+	收到 EXEC 命令后进入事务执行，事务中任意命令执行失败，其余的命令依然被执行。
+	在事务执行过程，其他客户端提交的命令请求不会插入到事务执行命令序列中。
+	事务从开始到执行会经历三个阶段：开始事务，命令入队，执行事务
+	它先以 MULTI 开始一个事务， 然后将多个命令入队到事务中， 最后由 EXEC 命令触发事务， 一并执行事务中的所有命令：
+	DISCARD ：取消事务，放弃执行事务块内的所有命令。
+	EXEC ：执行所有事务块内的命令。
+	MULTI：标记一个事务块的开始。
+	UNWATCH：取消 WATCH 命令对所有 key 的监视。
+	WATCH key [key ...] ：监视一个(或多个) key ，如果在事务执行之前这个(或这些) key 被其他命令所改动，那么事务将被打断。
+	
+脚本
+	Redis 脚本使用 Lua 解释器来执行脚本。执行脚本的常用命令为 EVAL。
+	EVAL script numkeys key [key ...] arg [arg ...] ：执行 Lua 脚本。
+	EVALSHA sha1 numkeys key [key ...] arg [arg ...] ：执行 Lua 脚本。
+	SCRIPT EXISTS script [script ...]：查看指定的脚本是否已经被保存在缓存当中。
+	SCRIPT FLUSH ：从脚本缓存中移除所有脚本。
+	SCRIPT KILL：杀死当前正在运行的 Lua 脚本。
+	SCRIPT LOAD script ：将脚本 script 添加到脚本缓存中，但并不立即执行这个脚本。
+	
+连接
+	AUTH password ：验证密码是否正确
+	ECHO message ：打印字符串
+	PING：查看服务是否运行
+	QUIT：关闭当前连接
+	SELECT index：切换到指定的数据库
+	
+服务器
+	1 BGREWRITEAOF： 异步执行一个 AOF（AppendOnly File） 文件重写操作
+	2 BGSAVE：在后台异步保存当前数据库的数据到磁盘
+	3	CLIENT KILL [ip:port] [ID client-id] 关闭客户端连接
+	4	CLIENT LIST 获取连接到服务器的客户端连接列表
+	5	CLIENT GETNAME 获取连接的名称
+	6	CLIENT PAUSE timeout 在指定时间内终止运行来自客户端的命令
+	7	CLIENT SETNAME connection-name 设置当前连接的名称
+	8	CLUSTER SLOTS 获取集群节点的映射数组
+	9	COMMAND 获取 Redis 命令详情数组
+	10	COMMAND COUNT 获取 Redis 命令总数
+	11	COMMAND GETKEYS 获取给定命令的所有键
+	12	TIME 返回当前服务器时间
+	13	COMMAND INFO command-name [command-name ...] 获取指定 Redis 命令描述的数组
+	14	CONFIG GET parameter 获取指定配置参数的值
+	15	CONFIG REWRITE 对启动 Redis 服务器时所指定的 redis.conf 配置文件进行改写
+	16	CONFIG SET parameter value 修改 redis 配置参数，无需重启
+	17	CONFIG RESETSTAT 重置 INFO 命令中的某些统计数据
+	18	DBSIZE 返回当前数据库的 key 的数量
+	19	DEBUG OBJECT key 获取 key 的调试信息
+	20	DEBUG SEGFAULT 让 Redis 服务崩溃
+	21	FLUSHALL 删除所有数据库的所有key
+	22	FLUSHDB 删除当前数据库的所有key
+	23	INFO [section] 获取 Redis 服务器的各种信息和统计数值
+	24	LASTSAVE 返回最近一次 Redis 成功将数据保存到磁盘上的时间，以 UNIX 时间戳格式表示
+	25	MONITOR 实时打印出 Redis 服务器接收到的命令，调试用
+	26	ROLE 返回主从实例所属的角色
+	27	SAVE 同步保存数据到硬盘
+	28	SHUTDOWN [NOSAVE] [SAVE] 异步保存数据到硬盘，并关闭服务器
+	29	SLAVEOF host port 将当前服务器转变为指定服务器的从属服务器(slave server)
+	30	SLOWLOG subcommand [argument] 管理 redis 的慢日志
+	31	SYNC 用于复制功能(replication)的内部命令
+	
+数据备份与恢复
+	save：数据保存 BGSAVE
+	如果需要恢复数据，只需将备份文件 (dump.rdb) 移动到 redis 安装目录并启动服务即可。获取 redis 目录可以使用 CONFIG 命令，如下所示：config get dir
+	安全：
+	默认是不需要密码登录，我们可以设置密码
+	CONFIG set requirepass "bobobobo" ,
+	设置完密码后，需要用密码登录一下：AUTH 密码;之后才能执行我们的命令
+	性能测试：
+	要在还没登录客户端的时候运行：redis-benchmark [option] [option value]
+	redis-benchmark -h 127.0.0.1 -p 6379 -t set,lpush -n 10000 -q
+	redis-benchmark -n 10000
+	
+客户端连接
+	概要信息：
+	Redis 通过监听一个 TCP 端口或者 Unix socket 的方式来接收来自客户端的连接，当一个连接建立后，Redis 内部会进行以下一些操作：
+	首先，客户端 socket 会被设置为非阻塞模式，因为 Redis 在网络事件处理上采用的是非阻塞多路复用模型。
+	然后为这个 socket 设置 TCP_NODELAY 属性，禁用 Nagle 算法
+	然后创建一个可读的文件事件用于监听这个客户端 socket 的数据发送
+	最大连接数
+	在 Redis2.4 中，最大连接数是被直接硬编码在代码里面的，而在2.6版本中这个值变成可配置的。
+	maxclients 的默认值是 10000，你也可以在 redis.conf 中对这个值进行修改。
+	查看：config get maxclients
+	设置：redis-server --maxclients 100000
+	1	CLIENT LIST	返回连接到 redis 服务的客户端列表
+	2	CLIENT SETNAME	设置当前连接的名称
+	3	CLIENT GETNAME	获取通过 CLIENT SETNAME 命令设置的服务名称
+	4	CLIENT PAUSE	挂起客户端连接，指定挂起的时间以毫秒计
+	5	CLIENT KILL	关闭客户端连接
+	
+管道技术
+	概要：
+	Redis是一种基于客户端-服务端模型以及请求/响应协议的TCP服务。这意味着通常情况下一个请求会遵循以下步骤：
+	客户端向服务端发送一个查询请求，并监听Socket返回，通常是以阻塞模式，等待服务端响应。
+	服务端处理命令，并将结果返回给客户端。
+	Redis 管道技术可以在服务端未响应时，客户端可以继续向服务端发送请求，并最终一次性读取所有服务端的响应。
+	$(echo -en "PING\r\n SET runoobkey redis\r\nGET runoobkey\r\nINCR visitor\r\nINCR visitor\r\nINCR visitor\r\n"; sleep 10) | nc localhost 6379
+	
+分区
+	定义：分区是分割数据到多个Redis实例的处理过程，因此每个实例只保存key的一个子集。
+	分区的优势
+	通过利用多台计算机内存的和值，允许我们构造更大的数据库。
+	通过多核和多台计算机，允许我们扩展计算能力；通过多台计算机和网络适配器，允许我们扩展网络带宽。
+	分区的不足
+	redis的一些特性在分区方面表现的不是很好：
+	涉及多个key的操作通常是不被支持的。举例来说，当两个set映射到不同的redis实例上时，你就不能对这两个set执行交集操作。
+	涉及多个key的redis事务不能使用。
+	当使用分区时，数据处理较为复杂，比如你需要处理多个rdb/aof文件，并且从多个实例和主机备份持久化文件。
+	增加或删除容量也比较复杂。redis集群大多数支持在运行时增加、删除节点的透明数据平衡的能力，但是类似于客户端分区、代理等其他系统则不支持这项特性。然而，一种叫做presharding的技术对此是有帮助的。
+	
+	分区类型
+		Redis 有两种类型分区。 假设有4个Redis实例 R0，R1，R2，R3，和类似user:1，user:2这样的表示用户的多个key，对既定的key有多种不同方式来选择这个key存放在哪个实例中。也就是说，有不同的系统来映射某个key到某个Redis服务。
+		
+		范围分区：
+			最简单的分区方式是按范围分区，就是映射一定范围的对象到特定的Redis实例。
+			比如，ID从0到10000的用户会保存到实例R0，ID从10001到 20000的用户会保存到R1，以此类推。
+			这种方式是可行的，并且在实际中使用，不足就是要有一个区间范围到实例的映射表。这个表要被管理，同时还需要各 种对象的映射表，通常对Redis来说并非是好的方法。
+			
+		哈希分区
+			另外一种分区方法是hash分区。这对任何key都适用，也无需是object_name:这种形式，像下面描述的一样简单：
+			用一个hash函数将key转换为一个数字，比如使用crc32 hash函数。对key foobar执行crc32(foobar)会输出类似93024922的整数。
+			对这个整数取模，将其转化为0-3之间的数字，就可以将这个整数映射到4个Redis实例中的一个了。93024922 % 4 = 2，就是说key foobar应该被存到R2实例中。注意：取模操作是取除的余数，通常在多种编程语言中用%操作符实现。
+java使用Redis
+注意事项：redis-server需要手动启动！
+报错记录
+1：shardedJedisPool空指针：shardedJedisPool必须用spring去创建不能自己创建！不知道为什么！
+
+查看所有key的数量 info keyspace
+查看所有key的键id keys *
