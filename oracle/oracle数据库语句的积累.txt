@@ -1,0 +1,2 @@
+显示所有表名
+	select * from all_tables

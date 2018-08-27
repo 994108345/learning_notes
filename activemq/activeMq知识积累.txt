@@ -1,0 +1,220 @@
+activeMq的消费默认是异步的，因为jms就是异步的。
+
+activeMq和jms的关系
+	JMS是一个用于提供消息服务的技术规范，它制定了在整个消息服务提供过程中的所有数据结构和交互流程。
+	而MQ则是消息队列服务，是面向消息中间件（MOM）的最终实现，是真正的服务提供者；MQ的实现可以基于JMS，也可以基于其他规范或标准。
+	
+	消息通信机制
+	
+		点对点模式：每个消息只有一个消费者，它的目的地称为queue队列。
+		
+		发布/订阅模式，每个消息可以有多个消费者，而且订阅一个主题的消费者，只能消费自它订阅之后发布的消息。
+		
+	消息确认机制
+	
+		Session.AUTO_ACKNOWLEDGE，直接使用receive方法。
+　　　	Session.CLIENT_ACKNOWLEDGE，通过消息的acknowledge 方法确认消息。
+　　　	Session.DUPS_ACKNOWLEDGE，该选择只是会话迟钝第确认消息的提交。如果JMS provider 失败，那么可能会导致一些重复的消息。如果是重复的消息，那么JMS provider 必须把消息头的JMSRedelivered 	字段设置为true。
+
+ActiveMQ简介
+
+	ActiveMQ是什么
+		
+		完全支持JMS1.1和J2EE规范的JMS
+		
+		provider实现的消息中间件（Message Oriented Middleware，MOM）
+		
+	 ActiveMQ能干什么最主要的功能就是：
+
+		实现JMS Provider，用来帮助实现高可用、高性能、可伸缩、易用和安全的企业级面向消息服务的系统
+		
+	ActiveMQ特点
+	
+		完全支持JMS1.1和J2EE 1.4规范（持久化，XA消息，事务) 支持多种传送协议：in-VM,TCP,SSL,NIO,UDP,JGroups,JXTA
+		
+		可插拔的体系结构，可以灵活定制，如：消息存储方式、安全管理等
+		
+		很容易和Application Server集成使用多种语言和协议编写客户端。语言:Java,C,C++,C#,Ruby,Perl,Python,PHP
+		
+		从设计上保证了高性能的集群，客户端-服务器，点对点可以很容易的和Spring结合使用支持通过JDBC和journal提供高速的消息持久化支持与Axis的整合
+		
+消息中间件（MOM：Message Oriented Middleware）
+		
+	MOM基本功能：将信息以消息的形式，从一个应用程序传送到另一个或多个应用程序。
+		
+	MOM主要特点：
+
+		1：消息异步接受，类似手机短信的行为，消息发送者不需要等待消息接受者的响应，减少软件多系统集成的耦合度；
+		
+		2：消息可靠接收，确保消息在中间件可靠保存，只有接收方收到后才删除消息，多个消息也可以组成原子事务
+		
+	消息中间件的主要应用场景：
+		
+		在多个系统间进行整合和通讯的时候，通常会要求：
+		1：可靠传输，数据不能丢失，有的时候，也会要求不能重复传输；
+		2：异步传输，否则各个系统同步发送接受数据，互相等待，造成系统瓶颈
+		
+	目前比较知名的消息中间件：
+		
+		AcitveMQ：是免费的java实现的消息中间件
+		Kafka、RabbitMQ、RocketMQ
+		
+ActiveMQ 安装和基本使用
+
+	下载并安装ActiveMQ服务器端
+		1：从http://activemq.apache.org/download.html下载最新的ActiveMQ
+		2：直接解压，然后拷贝到你要安装的位置就好了 启动运行
+	
+	1：普通启动：
+		win: 到ActiveMQ/bin下面根据64或32位去相应目录双击activemq
+		linux：到ActiveMQ/bin下面，./activemq start
+	2：启动并指定日志文件 ./activemq start > /tmp/activemqlog （linux）
+	
+	检查是否已经启动
+		ActiveMQ默认采用61616端口提供JMS服务，使用8161端口提供管理控制台服务，执行以下命令以便检验是否已经成功启动ActiveMQ服务：
+		1：比如查看61616端口是否打开： netstat -an | grep 61616
+		2：也可以直接查看控制台输出或者日志文件
+		3：还可以直接访问ActiveMQ的管理页面：http://192.168.1.106:8161/admin/ 默认的用户名和密码是admin/admin
+		关闭ActiveMQ，可以用./activemq stop
+		暴力点的可以用ps -ef | grep activemq 来得到进程号，然后kill掉
+		
+JMS基本概念
+	
+	JMS是什么：JMS Java Message Service，Java消息服务，是Java EE中的一个技术。
+	
+	JMS规范
+		JMS定义了Java 中访问消息中间件的接口，并没有给予实现，实现JMS 接口的消息中间件称为JMS Provider，例如ActiveMQ
+	
+	JMS provider：实现JMS接口和规范的消息中间件
+	
+	JMS message：JMS的消息，JMS消息由以下三部分组成：
+		1：消息头：每个消息头字段都有相应的getter和setter方法
+		2：消息属性：如果需要除消息头字段以外的值，那么可以使用消息属性
+		3：消息体：封装具体的消息数据
+	
+	JMS producer：消息生产者，创建和发送JMS消息的客户端应用
+	
+	JMS consumer：消息消费者，接收和处理JMS消息的客户端应用消息的消费可以采用以下两种方法之一：
+		1：同步消费：通过调用消费者的receive方法从目的地中显式提取消息，receive 方法可以一直阻塞到消息到达。
+		2：异步消费：客户可以为消费者注册一个消息监听器，以定义在消息到达时所采取的动作
+	
+	JMS domains：消息传递域，JMS规范中定义了两种消息传递域：
+		点对点（PTP）：
+		消息传递域和发布/订阅消息传递域（Pub/Sub）：
+		
+		点对点消息传递的特点
+			每个消息只能有一个消费者
+			消息的生产者和消费者之间没有时间上的相关性。无论消费者在生产者发送消息的时候是否处于运行状态，它都可以提取消息。
+			
+		发布/订阅小心传递域的特点如下：
+			每个消息可以有多个消费者
+			生产者和消费者之间有时间上的相关性。订阅一个主题的消费者只能消费自它订阅之后发布的消息。JMS规范允许客户创建持久订阅，在这一定程度上放松了时间上的相关性要求。持久订阅允许消费它在未处于激活状态时发送的消息。
+			
+		在点对点消息传递域中，目的地称为队列
+		在发布/订阅消息传递域中，目的地称为主题
+		
+JMS的一些对象：
+	Connection factory：连接工厂，用来创建连接对象，以连接到JMS的provider
+	JMS Connection：封装了客户与JMS 提供者之间的一个虚拟的连接
+	
+	JMS Session：
+		是生产和消费消息的一个单线程上下文会话用于创建消息生产者（producer）、消息消费者（consumer）和消息（message）等。会话提供了一个事务性的上下文，在这个上下文中，一组发送和接收被组合到了一个原子操作中。
+	Destination：消息发送到的目的地
+	Acknowledge：签收
+	Transaction：事务
+	JMS client：用来收发消息的Java应用
+	Non-JMS client：使用JMS provider本地API写的应用，用来替换JMS API实现收发消息的功能，通常会提供其他的一些特性，比如：CORBA、RMI等。
+	Administered objects：预定义的JMS对象，通常在provider规范中有定义，提供给JMS客户端来访问，比如：
+	ConnectionFactory和Destination
+
+JMS的PTP模型	
+
+	JMS PTP：模型定义了客户端如何向队列发送消息，从队列接收消息，以及浏览队列中的消息。
+	
+	PTP模型的基于队列的，生产者发消息到队列，消费者从队列接收消息，队列的存在使得消息的异步传输成可能。和邮件系统中的邮箱一样，队列可以包含各种消息，JMS Provider提供工具管理队列的创建、删除。
+	
+	PTP的特点：
+		1.如果在Session关闭时，有一些消息已经被收到，但没有签收，那么，当消费者下次连接到相同的队列时，这些消息还会被再次接收。
+		2.如果用户在receive方法中设定了消息选择条件，那么不符合条件的消息会留在队列中，不会被接收到
+		3.队列可以长久地保存消息直到消费者收到消息。消费者不需要因为担心消息会丢失而时刻和队列保持激活的连接状态，充分体现了异步传输模式的优势。
+		
+JMS的Pub/Sub模型
+	
+	JMS Pub/Sub 模型： 定义了如何向一个内容节点发布和订阅消息，这些节点被称作topic（主题），主题可以被认为是消息的传输中介，发布者发布消息到主题，订阅者从主题订阅消息。主题使得消息订阅者和发布者保持互相独立，不需要接触即可保证消息的传送。
+	
+	pub/Sub的一些特点
+	
+		1：消息订阅分为非持久订阅和持久订阅
+			非持久化订阅：只有客户处于激活状态，也就是和JMS provider保持连接转态，才能收到发送到某个主题的信息，而当客户端处于离线状态，这个时间段发送到主题的消息将会丢失，永远不会收到
+			持久化订阅：客户端向JMS注册一个识别自己身份的ID，当这个客户端处于离线时，JMS Provider会为这个ID保存所有发送到主题的信息，当客户再次连接JMS provider时，会根据自己的ID得到所有离线时发送到主题的消息。
+		2：如果用户在receive方法中设定了消息选择条件，那么不符合的消息不会被接收。
+		
+一个JMS应用的基本步骤
+	
+	1：创建一个JMS connection factory
+	2：通过connection factory来创建JMS connection
+	3：启动JMS connection
+	4：通过connection创建JMS session
+	5：创建JMS destination
+	6：创建JMS producer，或者创建JMS message，并设置destination
+	7：创建JMS consumer，或者是注册一个JMS message listener
+	8：发送或者接受JMS message（s）
+	9：关闭所有的JMS资源（connection、session、producer、consumer等）
+	
+activeMq封装说明
+	common：公共目录包
+		MapMessageEntity ：map消息模型类
+		PatternType ：MQ发送模式常量类
+
+	exception：错误异常处理
+		AMQReceiverException ：接收异常类
+		AMQSendException：发送异常类
+		
+	receiver：接收信息
+		AbsListener：所有监听触发事件类必须继承此类，此类为封装抽象类
+		ActiveMQReceiverContainers：接收容器实例化，
+		AmqPlugin、AmqPluginImpl：amq作为插件处理
+		
+	Sender：发送
+		SenderProcesser ：发送的抽象处理类，所有生产者需要继承该类
+		ActiveMQSender：发送的封装管理
+		JsonSenderProcesser、MapSenderProcesser 、ObjectSenderProcesser不
+		同的生产者
+		
+	ActiveMQSpringHelper ：AMQ的总人口，提供所有的api方法JsonUtils：json与object的转换	
+		
+死信队列
+	默认情况下，死信队列是默认开启的！
+	DLQ-死信队列(Dead Letter Queue)用来保存处理失败或者过期的消息。
+	
+	出现以下情况时，消息会被redelivered
+		1.当一个消息被redelivered超过maximumRedeliveries(缺省为6次，具体设置请参考后面的链接)次数时，会给broker发送一个"Poison ack"，这个消息被认为是a poison pill，这时broker会将这个消息发送到DLQ，以便后续处理。
+		2.缺省的死信队列是ActiveMQ.DLQ，如果没有特别指定，死信都会被发送到这个队列。
+		3.缺省持久消息过期，会被送到DLQ，非持久消息不会送到DLQ
+		4.由于测试环境应用复杂的原因，造成了jms死信队列一直挤压很多数据，从而导致存储爆满，进而造成了各个客户端不能正常发送消息。针对这些死信队列，一般都没有利用价值的。测试一般都关注某模块！为了避免某队列的死信队列的挤压，而使整个jms不可用，我们选择了通过ActiveMQ的配置，直接丢弃掉死信队列的消息。
+	
+	可以通过配置文件(activemq.xml)来调整死信发送策略。
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		

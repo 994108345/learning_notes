@@ -165,3 +165,9 @@ mysql锁和事务
 		
 		参考微博：https://www.cnblogs.com/dongqingswt/p/3460440.html
 		
+注意：
+	mysql的唯一索引，insert操作会对插入的唯一索引加行锁。
+		如果没有唯一索引，不加行锁，因为数据无所谓重复不重复。
+		
+	
+		
