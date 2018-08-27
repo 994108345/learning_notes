@@ -1,0 +1,418 @@
+2 缓冲区
+	
+	2.1 缓冲区
+		
+		定义：缓冲区是包在一个对象内的基本数据元素数组。
+		
+		2.1.1 属性
+			
+			所有的缓冲区都具有四个属性来提供关于其所包含的数据元素的信息
+			
+				容量（Capacity）缓冲区能够容纳的数据元素的最大数量。这一容量在缓冲区创建时被设定，并且永远不能被改变。
+				
+				上界（Limit）缓冲区的第一个不能被读或写的元素。或者说，缓冲区中现存元素的计数。
+				
+				位置（Position）下一个要被读或写的元素的索引。位置会自动由相应的 get( )和 put( )函数更新。
+				
+				标记（Mark）一个备忘位置。调用 mark( )来设定 mark = postion。调用 reset( )设定 position =mark。标记在设定前是未定义的( undefined) 。
+				
+				这四个属性之间总是遵循以下关系：
+				0 <= mark <= position <= limit <= capacity
+				
+		2.1.2 缓冲区API
+		
+			package java.nio;
+			public abstract class Buffer {
+				public final int capacity( )
+				public final int position( )
+				public final Buffer position (int newPositio
+				public final int limit( )
+				public final Buffer limit (int newLimit)
+				public final Buffer mark( )
+				public final Buffer reset( )
+				public final Buffer clear( )
+				public final Buffer flip( )
+				public final Buffer rewind( )
+				public final int remaining( )
+				public final boolean hasRemaining( )
+				public abstract boolean isReadOnly( );
+			}	
+			
+			注意看mark(),reset(),clear()等都是返回Buffer，而不是void，这是因为这里用到了级联调用。该方法直接返回调用者本身，所以可以直接这么写，
+			buffer.mark( );
+			buffer.position(5);
+			buffer.reset( );
+				被简写为
+			buffer.mark().position(5).reset( );
+			
+			保证代码的可读性的情况下再用这种方式。不要乱用！
+			
+		2.1.3 存取
+			
+			put(value):将value存入缓冲区的position位置上，然后position+1
+			get();读取缓冲区position位置上的数据，然后position+1；
+			get(int index);读取缓冲区指定位置上的数据
+		
+		2.1.4 填充
+			
+			put(int index，Object value)：将缓冲区指定index位置上的值改成value。
+			
+		2.1.5 翻转
+			
+			即我们已经写满缓冲区，我们想将其中的所有数据传递给通道。
+			操作步骤：
+				将上限属性limit设置为当前位置position，
+				将position设置为0,
+				即buffer.limit(buffer.position()).position(0);
+				在api中已经将上述操作包装成一个函数flip();我们直接用即可。
+				
+			Rewind()函数与 flip()相似，但不影响上界属性。它只是将位置值设回 0。
+			
+		2.1.6 释放
+			
+			布尔函数 hasRemaining()会在释放缓冲区时告诉您是否已经达到缓冲区的上界。
+			
+			以下是一种将数据元素从缓冲区释放到一个数组的方法
+			
+			for (int i = 0; buffer.hasRemaining( ), i++) {
+				myByteArray [i] = buffer.get( );
+			}
+			
+			remaining()函数将告知您从当前位置到上界还剩余的元素数目
+			
+			int count = buffer.remaining( );
+				for (int i = 0; i < count, i++) {
+				myByteArray [i] = buffer.get( );
+			}
+			这种比较高效。	
+				
+			缓冲区并不是多线程安全的。如果您想以多线程同时存取特定的缓冲区，您需要在存取缓冲区之前进行同步（例如对缓冲区对象进行跟踪）
+			
+			Clear()函数将缓冲区重置为空状态。它并不改变缓冲区中的任何数据元素，而是仅仅将上界设为容量的值，并把位置设回 0
+			
+		2.1.7 压缩（不太理解）
+			
+			compact()函数：这一缓冲区工具在复制数据时要比您使用 get()和 put()函数高效得多。作用是丢弃已经释放的数据，保留未释放的数据，并使缓冲区对重新填充容量准备就绪。
+			测试结果为：将position之前的数剧置空，整个数剧往前移了一位，position变为limit+1。
+			例：CharBuffer charBuffer = CharBuffer.allocate(100);
+				charBuffer.put('w');
+				charBuffer.put('z');
+				charBuffer.put('l');
+				charBuffer.position(1);
+				charBuffer.compact();
+				System.out.println(charBuffer.position());
+			本来position在1，执行compact()方法后，整个数组往前近一个，原来的0被删除，1的值移到0上，依次类推，最后的00是新创建的空对象，而此时缓冲区的position等于数组的最后一个下标即99
+			
+		2.1.8 标记 
+			
+			使缓冲区能够记住一个位置并在之后将其返回。
+			
+			reset( )函数将位置设为当前的标记值。如果标记值未定义，调用 reset( )将导致 InvalidMarkException 异常。
+			
+			一些缓冲区函数会抛弃已经设定的标记（rewind( )，clear( )，以及 flip( )总是抛弃标记）
+			
+			调用limit( )或 position( )带有索引参数的版本会抛弃标记。代码如下：
+			@Test
+			public void resetTest(){
+				CharBuffer charBuffer = CharBuffer.allocate(100);
+				charBuffer.put('w');
+				charBuffer.put('z');
+				charBuffer.mark();//此时mark为2
+				charBuffer.put('l');
+		        charBuffer.reset();
+				charBuffer.limit(1);//将limit设置为1，1小于2，所以mark会被清零，恢复未定义的状态
+				System.out.println();
+			}
+			
+		2.1.9 比较	
+			
+			所有的缓冲区都提供了一个常规的equals( )函数用以测试两个缓冲区的是否相等，以及一个 compareTo( )函数用以比较缓冲区。
+			
+			两个缓冲区被认为相等的充要条件是：
+				  两个对象类型相同。包含不同数据类型的 buffer 永远不会相等，而且 buffer绝不会等于非 buffer 对象。
+  				两个对象都剩余同样数量的元素。Buffer 的容量不需要相同，而且缓冲区中剩余数据的索引也不必相同。但每个缓冲区中剩余元素的数目（从位置到上界）必须相同。
+					在每个缓冲区中应被 Get()函数返回的剩余数据元素序列必须一致。
+					
+			这一函数在缓冲区参数小于，等于，或者大于引用 compareTo( )的对象实例时，分别返回一个负整数，0 和正整数。这些就是所有典型的缓冲区所实现的 java.lang.Comparable 接口语义。这意味着缓冲区数组可以通过调用 java.util.Arrays.sort()函数按照它们的内容进行排序。
+			
+		2.1.10 批量移动
+		
+			缓冲区的涉及目的就是为了能够高效传输数据。
+			
+			
+			
+	2.2 创建缓冲区
+
+		java中有七种主要的缓冲类：MappedByteBuffer，IntBuffer，DoubleBuffer，ShortBuffer，LongBuffer，FloatBuffer，和 ByteBuffer。
+		
+		例子：
+			CharBuffer charBuffer = CharBuffer.allocate(100);
+				或
+			char [] myArray = new char [100];
+			CharBuffer charbuffer = CharBuffer.wrap (myArray);
+			
+			区别在于，第二种的数组存在引用传递，若你修改了数组的值，会间接导致缓冲区的值被修改。
+			
+		通过 allocate()或者 wrap()函数创建的缓冲区通常都是间接的
+
+		Boolean 型函数 hasArray()告诉您这个缓冲区是否有一个可存取的备份数组。如果这个函数的返回 true，array()函数会返回这个缓冲区对象所使用的数组存储空间的引用。
+		
+		如果一个缓冲区是只读的，它的备份数组将会是超出上界的	
+			
+		arrayOffset()，返回缓冲区数据在数组中存储的开始位置的偏移量	
+			
+	2.3 复制缓冲区
+
+		Duplicate()函数创建了一个与原始缓冲区相似的新缓冲区。两个缓冲区共享数据元素，拥有同样的容量，但每个缓冲区拥有各自的位置，上界和标记属性。对一个缓冲区内的数据元素所做的改变会反映在另外一个缓冲区上。	
+		
+		您 可 以 使 用 asReadOnlyBuffer() 函 数 来 生 成 一 个 只 读 的 缓 冲 区 视 图 。
+		
+		如果一个只读的缓冲区与一个可写的缓冲区共享数据，或者有包装好的备份数组，那么对这个可写的缓冲区或直接对这个数组的改变将反映在所有关联的缓冲区上，包括只读缓冲区
+		
+		slice()创建一个从原始缓冲区的当前位置开始的新缓冲区，并且其容量是原始缓冲区的剩余元素数量（limit-position）这个新缓冲区与原始缓冲区共享一段数据元素子序列。分割出来的缓冲区也会继承只读和直接属性。
+			
+	2.4 字节缓冲区
+		
+		字节是操作系统及其 I/O 设备使用的基本数据类型。
+		
+		2.1.1 字节顺序
+			
+			多字节数值被存储在内存中的方式一般称为endian-ness(字节顺序)。
+			
+			如果数字数值的最高字节——big end（大端），位于低位地址，那么系统就是大端字节顺序。如果最低字节最先保存在内存中，那么小端字节顺序。
+			
+			字节顺序很少由软件设计者决定；它通常取决于硬件设计。
+			
+			在 java.nio 中，字节顺序由 ByteOrder 类封装。
+			
+			ByteOrder 类定义了决定从缓冲区中存储或检索多字节数值时使用哪一字节顺序的常量。
+			
+			ByteBuffer 类有所不同：默认字节顺序总是 ByteBuffer.BIG_ENDIAN
+			
+			Java 的默认字节顺序是大端字节顺序
+			
+			视图的字节顺序设定在创建后不能被改变，而且如果原始的字节缓冲区的字节顺序在之后被改变，它也不会受到影响。
+		
+		2.4.2 直接缓冲区
+		
+			定义：直接缓冲区被用于与通道和固有 I/O 例程交互。它们通过使用固有代码来告知操作系统直接释放或填充内存区域，对用于通道直接或原始存取的内存区域中的字节元素的存储尽了最大的努力。
+			
+			字节缓冲区跟其他缓冲区类型最明显的不同在于，它们可以成为通道所执行的 I/O 的源头和/或目标。通道只接收 ByteBuffer 作为参数。
+			
+			只有字节缓冲区有资格参与I/O 操作。
+		
+			直接字节缓冲区通常是 I/O 操作最好的选择。在设计方面，它们支持 JVM 可用的最高效I/O 机制。
+			
+			非直接字节缓冲区可以被传递给通道，但是这样可能导致性能损耗。
+			
+			如果您向一个通道中传递一个非直接 ByteBuffer对象用于写入，通道可能会在每次调用中隐含地进行下面的操作：
+				
+				1.创建一个临时的直接 ByteBuffer 对象。
+				2.将非直接缓冲区的内容复制到临时缓冲中。
+				3.使用临时缓冲区执行低层次 I/O 操作。
+				4.临时缓冲区对象离开作用域，并最终成为被回收的无用数据。
+		
+			这可能导致缓冲区在每个 I/O 上复制并产生大量对象
+			
+			直接缓冲区时 I/O 的最佳选择，但可能比创建非直接缓冲区要花费更高的成本。
+		
+			直接 ByteBuffer 是通过调用具有所需容量的 ByteBuffer.allocateDirect()函数产生的，就像我们之前所涉及的 allocate()函数一样。
+		
+			isDirect()：是否为直接缓冲区
+			
+		2.4.3 视图缓冲区
+			
+			定义：视图缓冲区通过已存在的缓冲区对象实例的工厂方法来创建。这种视图对象维护它自己的属性，容量，位置，上界和标记，但是和原来的缓冲区共享数据元素。
+			 
+			但是 ByteBuffer 类允许创建视图来将 byte 型缓冲区字节数据映射为其它的原始数据类型。例如，asLongBuffer()函数创建一个将八个字节型数据当成一个 long 型数据来存取的视图缓冲区
+		
+			即低字节的缓冲区可以转化成高字节的视图缓冲区。
+		
+			当直接从 byte 型缓冲区中采集数据时，视图缓冲区拥有提高效率的潜能。
+			
+		2.4.4 数据元素视图
+			
+		2.4.5 存取无符号数据
+			
+		2.4.6 内存映射缓冲区
+			
+3 通道（channel）
+
+	Channel 用于在字节缓冲区和位于通道另一侧的实体（通常是一个文件或套接字）之间有效地传输数据。
+	
+	3.1 通道基础
+	
+		您可以从顶层的 Channel 接口看到，对所有通道来说只有两种共同的操作：检查一个通道是否打开（IsOpen()）和关闭一个打开的通道（close()）。
+	
+		InterruptibleChannel 是一个标记接口，当被通道使用时可以标示该通道是可以中断的（Interruptible）。
+	
+		通道只能在字节缓冲区上操作。
+		
+		 AbstractInterruptibleChannel 和AbstractSelectableChannel，它们分别为可中断的（interruptible）和可选择的（selectable）的通道实现提供所需的常用方法。
+		 
+		 3.1.1 打开通道
+		 
+			通道是访问 I/O 服务的导管。
+			
+			I/O 可以分为广义的两大类别：File I/O 和 Stream I/O。那么相应地有两种类型的通道也就不足为怪了，它们是文件（file）通道和套接字（socket）通道。
+	
+			Socket 通道有可以直接创建新 socket 通道的工厂方法。
+			FileChannel通道只能通过在一个打开的 RandomAccessFile、FileInputStream 或 FileOutputStream对象上调用 getChannel( )方法来获取。
+			
+		3.1.2 使用通道
+
+			通道可以是单向（unidirectional）或者双向的（bidirectional）。单向指只能读或写，双向指可以读也可以写。
+			
+			通道会连接一个特定 I/O 服务且通道实例（channel instance）的性能受它所连接的 I/O 服务的特征限制
+			
+			通道可以以阻塞（blocking）或非阻塞（nonblocking）模式运行。非阻塞模式的通道永远不会让调用的线程休眠。请求的操作要么立即完成，要么返回一个结果表明未进行任何操作。只有面向流的（stream-oriented）的通道，如 sockets 和 pipes 才能使用非阻塞模式。
+	
+		3.1.3 关闭通道
+				
+			与缓冲区不同，通道不能被重复使用。	
+			
+			调用通道的close( )方法时，可能会导致在通道关闭底层I/O服务的过程中线程暂时阻塞
+	
+			在一个通道上多次调用close( )方法是没有坏处的，但是如果第一个线程在close( )方法中阻塞，那么在它完成关闭通道之前，任何其他调用close( )方法都会阻塞。后续在该已关闭的通道上调用close( )不会产生任何操作，只会立即返回。
+	
+			可以通过 isOpen( )方法来测试通道的开放状态。
+	
+			休眠在其上的线程被中断就关闭通道
+			
+			可中断的通道也是可以异步关闭的。
+			
+	3.2 Scatter和Gather
+
+		数据是从几个缓冲区按顺序抽取（称为 gather）并沿着通道发送的。
+		从通道读取的数据会按顺序被散布（称为 scatter）到多个缓冲区
+		
+	3.3 文件通道
+
+		文件通道总是阻塞式的，因此不能被置于非阻塞模式。
+		
+		一个FileChannel实例只能通过在一个打开的file对象（RandomAccessFile、FileInputStream或 FileOutputStream）上调用getChannel( )方法获取
+	
+		FileChannel 对象是线程安全（thread-safe）的。
+		
+		3.3.1 访问文件
+		
+			 force( )。该方法告诉通道强制将全部待定的修改都应用到磁盘的文件上。
+			 
+		3.3.2 文件锁定
+
+			锁（lock）可以是共享的（shared）或独占的（exclusive）
+			
+			如果所有的锁都是强制性的（mandatory）
+			
+			文件锁旨在在进程级别上判优文件访问
+			
+			锁是与进程而不是 Java 线程关联	
+		
+	3.4 内存映射文件
+		
+		新的 FileChannel 类提供了一个名为 map( )的方法，该方法可以在一个打开的文件和一个特殊类型的 ByteBuffer 之间建立一个虚拟内存映射
+	
+		通过内存映射机制来访问一个文件会比使用常规方法读写高效得多，甚至比使用通道的效率都高。
+		
+		三种模式
+			
+			MapMode.READ_ONLY
+				
+				只读
+			
+			MapMode.READ_WRITE 
+			
+				允许修改映射的文件，
+				
+			MapMode.PRIVATE
+	
+				表示您想要一个写时拷贝（copy-on-write）的映射，该过程不会对底层文件做任何修改
+				
+				 unmap( )：一个映射一旦建立之后将保持有效，直到MappedByteBuffer 对象被施以垃圾收集动作为止。
+				 
+4 选择器
+	
+	4.1 选择器的基础
+	
+		您需要将之前创建的一个或多个可选择的通道注册到选择器对象中。
+		一个表示通道和选择器的键将会被返回。
+		选择键会记住您关心的通道。
+		它们也会追踪对应的通道是否已经就绪。
+		当您调用一个选择器对象的 select()方法时，相关的键建会被更新，用来检查所有被注册到该选择器的通道。
+		您可以获取一个键的集合，从而找到当时已经就绪的通道。
+		通过遍历这些键，您可以选择出每个从上次您调用 select( )开始直到现在，已经就绪的通道。
+	
+		从最基础的层面来看，选择器提供了询问通道是否已经准备好执行每个 I/0 操作的能力。
+		
+		调用者可以轻松地决定多个通道中的哪一个准备好要运行。
+			有两种方式可以选择：
+				被激发的线程可以处于休眠状态，直到一个或者多个注册到选择器的通道就绪，
+				或者它也可以周期性地轮询选择器，看看从上次检查之后，是否有通道处于就绪状态。
+				
+		4.1.1 选择器，可选择通道和选择键类
+		
+			选择器(Selector)
+			
+				选择器类管理着一个被注册的通道集合的信息和它们的就绪状态。通道是和选择器一起被注册
+				的，并且使用选择器来更新通道的就绪状态。当这么做的时候，可以选择将被激发的线程挂起，直
+				到有就绪的的通道。
+				
+			可选择通道(SelectableChannel)
+				
+				这个抽象类提供了实现通道的可选择性所需要的公共方法。它是所有支持就绪检查的通道类的
+				父类。FileChannel 对象不是可选择的，因为它们没有继承 SelectableChannel(见图 4-2)。
+				所有 socket 通道都是可选择的，包括从管道(Pipe)对
+				象的中获得的通道。SelectableChannel 可以被注册到 Selector 对象上，同时可以指定对
+				那个选择器而言，那种操作是感兴趣的。一个通道可以被注册到多个选择器上，但对每个选择器而
+				言只能被注册一次。
+				
+			选择键(SelectionKey)
+			
+				选 择 键 封 装 了 特 定 的 通 道 与 特 定 的 选 择 器 的 注 册 关 系 。 选 择 键 对 象 被
+				SelectableChannel.register( ) 返回并提供一个表示这种注册关系的标记。选择键包含了
+				两个比特集（以整数的形式进行编码），指示了该注册关系所关心的通道操作，以及通道已经准备
+				好的操作。
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+			
+			
+			

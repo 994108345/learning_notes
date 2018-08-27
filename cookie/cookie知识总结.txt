@@ -1,0 +1,78 @@
+cookie
+	
+定义：是常用的本地存储：是客户端用来存储数据的一种选项，它既可以在客户端设置也可以在服务器端设置。cookie会跟随任意HTTP请求一起发送。
+
+优点：兼容性好
+
+缺点：一是增加了网络流量，二是数据容量有限，最多只能存储4kb的数据，浏览器之间各有不同，三是不安全。
+
+Cookie访问控制
+	
+	cookie如此重要，在浏览器端，如果一个网站可以访问其他网站的cookie，肯定不行的，所以浏览器是不允许跨域访问cookie的，提高了Cookie的安全性。
+
+	如果想实现跨域访问，可以通过JSONP、CORS的方法实现。
+
+	另外，HTTP设置cookie时，提供了2个属性，可以增强cookie的安全性，分别是secure属性和httpOnly属性。
+
+	secure属性可防止信息在传递的过程中被监听捕获后导致信息泄露，如果设置为true，可以限制只有通过https访问时，才会将浏览器保存的cookie传递到服务端，如果通过http访问，不会传递cookie。
+
+	httpOnly属性可以防止程序获取cookie，如果设置为true，通过js等将无法读取到cookie，能有效的防止XSS攻击。
+	
+js读取设置删除cookie
+	//获取
+	getCookie(c_name) {
+    if (document.cookie.length > 0) {
+      let c_start = document.cookie.indexOf(c_name + "=");
+      if (c_start != -1) {
+        c_start = c_start + c_name.length + 1;
+        let c_end = document.cookie.indexOf(";", c_start);
+        if (c_end == -1)
+          c_end = document.cookie.length;
+        return document.cookie.substring(c_start, c_end);
+      }
+    }
+    return "";
+  }
+	//设置
+  setCookie(c_name:string, value:string, expireTimes?:number) {
+    let exdate = new Date();
+    //exdate.setDate(exdate.getDate()+expiredays);
+    exdate.setTime(exdate.getTime() + expireTimes);
+    document.cookie = c_name
+      + "="
+      + value
+      + ((expireTimes == null) ? "" : ";expires="
+        + exdate.toDateString());
+  }
+	//删除
+  removeCookie(c_name) {
+    this.setCookie(c_name, "", -1);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

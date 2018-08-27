@@ -1,0 +1,95 @@
+mongoDB
+1. 每一个启动的mongod都是实际存放数据的地方，都能作为别人的sharding
+
+2. 分片部署需要一个mongos，起路由分发的作用；需要一个配置服务器和若干个分片服务器（都是mongod）
+
+3. 单机的时候，应用连接的是mongod；分布式的时候，应用连接的是mongos。
+最简单的分片部署是单个的配置服务器，一个config（即mongod），一个mongos，几个sharding（即mongod）：
+
+
+mongod.exe --dbpath F:\code\mongoDB-DB\shard\config --port 20000
+mongos.exe --configdb 127.0.0.1:20000 --port 30000
+mongod.exe --dbpath F:\code\mongoDB-DB\shard\shard1 --port 10001
+mongod.exe --dbpath F:\code\mongoDB-DB\shard\shard2 --port 10002
+
+启动mongo.exe
+
+输入下面指令，添加分片信息
+	use admin
+	db.runCommand({addshard : "localhost:10001", allowLocal : true})
+	db.runCommand({addshard : "localhost:10002", allowLocal : true})
+	db.runCommand({"enablesharding" : "dbname"})
+	
+	dbName:是我们存数据的db名
+	
+还要设置片建，以提供负载均衡的依据：
+	db.runCommand({"shardcollection" : "dbname.collection", "key" : {"_id":1}})
+	dbname.collection是自己的数据库的数据集。设置的"key"需要已经建立索引。 
+	
+mongos下还有一些查看分片情况的命令，方便集群的管理和监控，可以自己体验下：
+
+	db.shards.find()
+	db.chunks.find()
+	db.printShardingStatus()
+	
+也可以通过runCommand的其他命令添加新的片，删除已有的片，而且添加的片可以是旧的mongod。
+
+测试开发的时候像上面这样的一组可能够了，真正健壮的集群可能要具备下面三个条件：
+
+	1. 多个配置服务器config1, config2, config3（可以都经过一个mongos来路由）
+
+	2. 每个sharding都是Replica Set
+
+	3. 每一台物理物理服务器承担若干个不同的进程(mongos, shards, config)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
