@@ -1,0 +1,60 @@
+1 NIO和IO的区别
+	IO是面向流的，NIO是面向缓冲区的
+	IO是阻塞的，NIO是可以阻塞也可以不阻塞的！
+	IO没一次IO请求都需要一个线程，而NIO可以用一个线程去管理多个IO请求。
+	
+2 NIO的主要成分
+	NIO主要包括三个部分：缓冲区、通道、选择器。
+	上原理图
+	通道注册在选择器上，选择器上用一个线程去跑所有的通道的io请求，如果当前调用的io阻塞的，选择器会立马让当前线程去跑其他不阻塞的通道去执行IO请求。而选择器就内部就是通过注册键集合、已选择键集合和取消键集合来实现非阻塞IO。
+	
+3 Buffer（缓冲区）概述
+	定义：缓冲区是包在一个对象内的基本数据元素数组。
+	除了Boolean类型，每个基本类型对应一个缓冲区，所以缓冲区有ByteBuffer、ShortBuffer、IntBuffer、LongBuffer、DoubleBuffer、FloatBuffer、CharBuffer还有一个集成ByteBuffer的映射缓冲区MyppedByteBuffer。
+	
+	缓冲区有四大属性：容量（Capacity）、上界（Limit）、位置（Position）、标记（Mark）。读取数据时就是根据这四种属性实现的。
+	
+	创建缓冲区常见的方式有两种：
+		1 CharBuffer charBuffer = CharBuffer.allocate(100);
+		2 char [] myArray = new char [100];CharBuffer charbuffer = CharBuffer.wrap (myArray);
+		
+	缓冲区分类：
+		普通缓冲区：上诉创建方式创建的都是普通缓冲区。
+		直接缓冲区：使用该ByteBuffer byteBuffer4 = ByteBuffer.allocateDirect(10);代码创建的缓冲区为直接缓冲区，特点是与底层交互最快！
+		视图缓冲区：ShortBuffer shortBuffer = byteBuffer.asShortBuffer();通过已经创建好的普通缓冲区的as....()方法创建成其他不同类型的缓冲区，因为存储的字节长度是不一样的，所以会自动转换。
+		
+3 Channel（通道）概述
+	定义：Channel 用于在字节缓冲区和位于通道另一侧的实体（通常是一个文件或套接字）之间有效地传输数据。
+	因为IO请求都是字节操作，所以与通道交互的缓冲区只能是字节缓冲区ByteBuffer！
+	
+	创建通道：
+		FileInputStream.getChannel()
+		
+	通道分类：
+		文件通道(FileChanel)：同步阻塞的，
+		嵌套字通道（SocketChanel）：可以不同步不阻塞，NIO的非阻塞就是基于该通道。
+			ServerSocketChannel:是一个基于通道的 socket 监听器
+			SocketChannel:SocketChannel 扮演客户端发起同一个监听服务器的连接。直到连接成功，它才能收到数据并且只会从连接到的地址接收。
+			DatagramChannel:既可以充当服务器（监听者）也可以充当客户端（发送者）.是无连接的。每个数据报（datagram）都是一个自包含的实体，拥有它自己的目的地址及不依赖其他数据报的数据净荷。
+
+4 select（选择器）概述
+	定义：您需要将之前创建的一个或多个可选择的通道注册到选择器对象中，选择键会记住您关心的通道，它们也会追踪对应的通道是否已经就绪。
+	
+	选择器主要包含三个对象：选择器(Selector)，可选择通道(SelectableChannel)，选择键(SelectionKey)
+	可选择通道：
+		定义：即被我们绑定到选择器上被选择器监听管理的通道。
+	
+	选择键：
+		定义：一个键表示了一个特定的通道对象和一个特定的选择器对象之间的注册关系 。
+		每个选择键里有一个intreset集合，存着通道想要进行的操作，而intereset有一个ready集合，存的是已经可以执行的操作集合。
+	
+	选择器：
+		选择器主要包含三个集合：已注册的键的集合(Registered key set)，已选择的键的集合(Selected key set)，已取消的键的集合(Cancelled key set)
+		通过这三个集合配合完成的select过程实现了非阻塞的功能，这也是NIO的核心！
+		
+		
+		
+	
+
+
+		

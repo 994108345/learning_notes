@@ -1,0 +1,180 @@
+HashMap
+	参考博客：https://www.cnblogs.com/chengxiao/p/6059914.html
+
+	数据结构
+	
+		先来了解一下java中的基本数据结构。
+		我们知道，数据结构的物理存储结构只有两种：顺序存储结构和链式存储结构（像栈，队列，树，图等是从逻辑结构去抽象的，映射到内存中
+		
+		数组：采用一段连续的存储单元来存储数据。对于指定下标的查找，时间复杂度为O(1)；通过给定值进行查找，需要遍历数组，逐一比对给定关键字和数组元素，时间复杂度为O(n)，当然，对于有序数组，则可采用二分查找，插值查找，斐波那契查找等方式，可将查找复杂度提高为O(logn)；对于一般的插入删除操作，涉及到数组元素的移动，其平均复杂度也为O(n)
+		线性链表：对于链表的新增，删除等操作（在找到指定操作位置后），仅需处理结点间的引用即可，时间复杂度为O(1)，而查找操作需要遍历链表逐一进行比对，复杂度为O(n)
+
+		二叉树：对一棵相对平衡的有序二叉树，对其进行插入，查找，删除等操作，平均复杂度均为O(logn)。
+
+		哈希表：相比上述几种数据结构，在哈希表中进行添加，删除，查找等操作，性能十分之高，不考虑哈希冲突的情况下，仅需一次定位即可完成，时间复杂度为O(1)，接下来我们就来看看哈希表是如何实现达到惊艳的常数阶O(1)的。
+		
+		在上面我们提到过，在数组中根据下标查找某个元素，一次定位就可以达到，哈希表利用了这种特性，哈希表的存储结构就是数组。
+	
+	哈希表
+		
+		哈希表实际上就是一个数组。
+		每次我们想把A值存入哈希表时，A值先进入哈希算法，进行计算，返回一个数字B。我们就将A值存到B数字对应小标的数组上。这就达到了O(1)的复杂度。
+		
+		如图
+		
+		取值时，将key传入哈希算法得出一个数字C，去数组对应下标C处取值即可。
+		
+	哈希碰撞
+		
+		由上可知，好的hash算法对hash表的查询速度是至关总要的。
+		很多时候，不同的key传hash算法会计算出一样的值。这就叫做哈希碰撞也叫哈希冲突。
+		解决的方法很多：
+			开放定址法（发生冲突，继续寻找下一块未被占用的存储地址），
+			再散列函数法，
+			链地址法，而HashMap即是采用了链地址法，也就是数组+链表的方式。
+		HahsMap采用的是链地址法，即每一个数组结点存放的是一个链表，若出息哈希冲突，则将冲突值存放到链表中最后一个元素的下一个结点中。
+		如图：
+	
+	以上就是HashMap的大概原理。
+	
+	加载因子
+		HashMap的默认加载因子是DEFAULT_LOAD_FACTOR = 0.75f;
+	
+	加载因子是表示Hsah表中元素的填满的程度.若:加载因子越大,填满的元素越多,好处是,空间利用率高了,但:冲突的机会加大了.反之,加载因子越小,填满的元素越少,好处是:冲突的机会减小了,但:空间浪费多了.
+
+	冲突的机会越大,则查找的成本越高.反之,查找的成本越小.因而,查找时间就越小.
+
+	因此,必须在 "冲突的机会"与"空间利用率"之间寻找一种平衡与折衷.这种平衡与折衷本质上是数据结构中有名的"时-空"矛盾的平衡与折衷.
+	
+	jdk1.8 的HashMap底层的数组加链表改成了数组加链表加红黑树。
+	即当链表长度小于8的时候，还是链表，大于8的时候该用红黑树。
+jdk1.7		
+
+哈希算法			
+	
+接下来我们更深的研究一下HashMap的特性
+	public HashMap()
+	public HashMap(int initialCapacity)
+	public HashMap(Map<? extends K, ? extends V> m)
+	public HashMap(int initialCapacity, float loadFactor)
+	
+初始化HashMap时，默认是无参的！
+
+	static final int DEFAULT_INITIAL_CAPACITY = 16;
+		默认的初始化容量
+	static final float DEFAULT_LOAD_FACTOR = 0.75f;
+		默认的初始化负载因子，该属性用于计算在不同条件下，HashMap的最优长度。
+		
+	static final int MAXIMUM_CAPACITY = 1 << 30;
+		hashMap允许的最大容量
+		
+	public HashMap() {
+        this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);//调用了另外一个代参构造函数，传入的是默认容量及默认负载因子。
+    }
+		
+	public HashMap(int initialCapacity, float loadFactor) {
+		//校验初始化容量不能小于0
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal initial capacity: " +
+                                               initialCapacity);
+        if (initialCapacity > MAXIMUM_CAPACITY)
+            initialCapacity = MAXIMUM_CAPACITY;
+		//校验初始化负载因子不能下雨0，且传入的负载因子必须是数字
+        if (loadFactor <= 0 || Float.isNaN(loadFactor))
+            throw new IllegalArgumentException("Illegal load factor: " +
+                                               loadFactor);
+
+        // Find a power of 2 >= initialCapacity
+        int capacity = 1;
+        while (capacity < initialCapacity)
+            capacity <<= 1;
+
+        this.loadFactor = loadFactor;
+        threshold = (int)Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
+        table = new Entry[capacity];
+        useAltHashing = sun.misc.VM.isBooted() &&
+                (capacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
+        init();
+    }
+	
+	
+	
+transient boolean useAltHashing;
+	如果该值为true，执行替换字符串键值的哈希码去减少由于弱哈希算法产生的碰撞。
+	
+transient final int hashSeed = sun.misc.Hashing.randomHashSeed(this);
+	产生一个随机的值，当做键的哈希吗，减少哈希冲突。
+	
+final int hash(Object k) {
+	int h = 0;
+	if (useAltHashing) {
+		if (k instanceof String) {
+			return sun.misc.Hashing.stringHash32((String) k);
+		}
+		h = hashSeed;
+	}
+
+	h ^= k.hashCode();
+
+	// This function ensures that hashCodes that differ only by
+	// constant multiples at each bit position have a bounded
+	// number of collisions (approximately 8 at default load factor).
+	h ^= (h >>> 20) ^ (h >>> 12);
+	return h ^ (h >>> 7) ^ (h >>> 4);
+}
+上诉代码为哈希算法，使用了各种位运算。
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+	jdk1.8的
+	
+	哈希算法：（以jdk1.7为例）
+		static final int hash(Object key) {
+			int h;
+			return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+		}
+		上诉代码就是HashMap中的哈希算法，即产生数组下标的算法。
+		如果key为null，则得到下标为0。
+		如果key不为null，
+			先求出key类hashCode()方法的返回值 A 
+			再求出A不带符号右移16位的得值B
+			最后A^(异或)B
+			
+	HashMap定义了下面几个静态常量。我们一个一个来分析
+	static final int DEFAULT_INITIAL_CAPACITY = 1 << 4;//默认的初始化容量 1带符号左移4位 即1*2^4=16
+	static final int MAXIMUM_CAPACITY = 1 << 30;//最大容量 1反复好左移30位,即1*2^30=16
+	static final float DEFAULT_LOAD_FACTOR = 0.75f;//默认的负载因子
+	static final int TREEIFY_THRESHOLD = 8; 
+	static final int UNTREEIFY_THRESHOLD = 6;	
+	static final int MIN_TREEIFY_CAPACITY = 64;	
+	
+	HashMap有四个构造函数，
+	 public HashMap(int initialCapacity, float loadFactor) 
+	 public HashMap(int initialCapacity)
+	 public HashMap(Map<? extends K, ? extends V> m)
+	 public HashMap()
+	 
+	 我们经常用的是无参的构造函数，看源码可以知道，默认无参的构造函数创建的是一个容量默认为16的HashMap
+	 源码：
+		public HashMap() {
+			this.loadFactor = DEFAULT_LOAD_FACTOR; // all other fields defaulted
+		}
+	 
+		
+		
+		
+		
+		

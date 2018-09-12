@@ -114,6 +114,9 @@ class Manipulator2<T extends Hasf>{  //extend是的意思将T擦除为Hasf，即Hasf替换了
 擦除主要的政党路由是从非泛化代码到泛化代码的转变过程，以及在不破坏现有类库的情况下，将泛型融入了java语言。
 使用泛型创建数组时，Array.newInstance()是推荐方式;
 
+网上搜的：
+super：<? super Father> 指的是Father是上限，传进来的对象必须是Father，或者是Father的父类，因此 new A<If<Child>>()会报错，因为Child是Father的子类
+extends：<? extends Father> 指的是Father是下限，传进来的对象必须是Father，或者是Father的子类，因此 new C<If<GrandFather>>()会报错，因为GrandFather是Father的父类
 
 即使擦除在方法或类内部移除了有关实际类型的信息，编译器仍旧可以确保在方法或类中使用的类型的内部一致性。
 例子：

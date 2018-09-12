@@ -238,6 +238,8 @@
 			
 3 通道（channel）
 
+	通道接口允许您以一种受控且可移植的方式来访问底层的 I/O服务。
+
 	Channel 用于在字节缓冲区和位于通道另一侧的实体（通常是一个文件或套接字）之间有效地传输数据。
 	
 	3.1 通道基础
@@ -246,7 +248,7 @@
 	
 		InterruptibleChannel 是一个标记接口，当被通道使用时可以标示该通道是可以中断的（Interruptible）。
 	
-		通道只能在字节缓冲区上操作。
+		通道只能在字节缓冲区上操作。不过非字节实现是不可能的，因为操作系统都是以字节的形式实现底层 I/O 接口的。
 		
 		 AbstractInterruptibleChannel 和AbstractSelectableChannel，它们分别为可中断的（interruptible）和可选择的（selectable）的通道实现提供所需的常用方法。
 		 
@@ -259,13 +261,19 @@
 			Socket 通道有可以直接创建新 socket 通道的工厂方法。
 			FileChannel通道只能通过在一个打开的 RandomAccessFile、FileInputStream 或 FileOutputStream对象上调用 getChannel( )方法来获取。
 			
+			 socket 类也有新的 getChannel( )方法。这些方法虽然能返回一个相应的 socket 通道对象，但它们却并非新通道的来源，RandomAccessFile.getChannel( )方法才是。只有在已经有通道存在的时候，它们才返回与一个 socket 关联的通道；它们永远不会创建新通道。
+
 		3.1.2 使用通道
+		
+			FileInputStream 对象总是以 read-only 的权限打开文件
 
 			通道可以是单向（unidirectional）或者双向的（bidirectional）。单向指只能读或写，双向指可以读也可以写。
 			
 			通道会连接一个特定 I/O 服务且通道实例（channel instance）的性能受它所连接的 I/O 服务的特征限制
 			
 			通道可以以阻塞（blocking）或非阻塞（nonblocking）模式运行。非阻塞模式的通道永远不会让调用的线程休眠。请求的操作要么立即完成，要么返回一个结果表明未进行任何操作。只有面向流的（stream-oriented）的通道，如 sockets 和 pipes 才能使用非阻塞模式。
+			
+			
 	
 		3.1.3 关闭通道
 				
@@ -276,10 +284,18 @@
 			在一个通道上多次调用close( )方法是没有坏处的，但是如果第一个线程在close( )方法中阻塞，那么在它完成关闭通道之前，任何其他调用close( )方法都会阻塞。后续在该已关闭的通道上调用close( )不会产生任何操作，只会立即返回。
 	
 			可以通过 isOpen( )方法来测试通道的开放状态。
+			
+			如果一个通道实现 InterruptibleChannel 接口（参见图 3-2），它的行为以下述语义为准：如果一个线程在一个通道上被阻塞并且同时被中断（由调用该被阻塞线程的 interrupt( )方法的另一个线程中断），那么该通道将被关闭，该被阻塞线程也会产生一个 ClosedByInterruptException 异常。
 	
 			休眠在其上的线程被中断就关闭通道
 			
 			可中断的通道也是可以异步关闭的。
+			
+			请不要将在 Channels 上休眠的中断线程同在 Selectors 上休眠的中断线程混淆。前者会关闭通道，而后者则不会。
+			
+			经验表明，想要在所有的操作系统上一致而可靠地处理被中断的 I/O 操作是不可能的。
+			
+			可中断的通道也是可以异步关闭的。实现 InterruptibleChannel 接口的通道可以在任何时候被关闭，即使有另一个被阻塞的线程在等待该通道上的一个 I/O 操作完成。
 			
 	3.2 Scatter和Gather
 
@@ -290,17 +306,37 @@
 
 		文件通道总是阻塞式的，因此不能被置于非阻塞模式。
 		
+		对于文件 I/O，最强大之处在于异步 I/O（asynchronous I/O），它允许一个进程可以从操作系统请求一个或多个 I/O 操作而不必等待这些操作的完成。
+		
 		一个FileChannel实例只能通过在一个打开的file对象（RandomAccessFile、FileInputStream或 FileOutputStream）上调用getChannel( )方法获取
 	
-		FileChannel 对象是线程安全（thread-safe）的。
+		FileChannel 对象是线程安全（thread-safe）的。影响通道位置或者影响文件大小的操作都是单线程的（single-threaded）。
 		
 		3.3.1 访问文件
 		
-			 force( )。该方法告诉通道强制将全部待定的修改都应用到磁盘的文件上。
+			同底层的文件描述符一样，每个 FileChannel 都有一个叫“file position”的概念。这个 position 值决定文件中哪一处的数据接下来将被读或者写。
+			
+			不同于缓冲区的是，如果实现 write( )方法时 position前进到超过文件大小的值，该文件会扩展以容纳新写入的字节。
+			
+			多个线程可以并发访问同一个文件而不会相互产生干扰。这是因为每次调用都是原子性的（atomic），并不依靠调用之间系统所记住的状态。
+			
+			force( )。该方法告诉通道强制将全部待定的修改都应用到磁盘的文件上。
 			 
 		3.3.2 文件锁定
 
 			锁（lock）可以是共享的（shared）或独占的（exclusive）
+			
+			锁的对象是文件而不是通道或线程，这意味着文件锁不适用于判优同一台 Java 虚拟机上的多个线程发起的访问。
+			
+			锁都是与一个文件关联的，而不是与单个的文件句柄或通道关联。
+			
+			我们使用锁来判优外部进程，而不是判优同一个 Java 虚拟机上的线程。
+			
+			要获得一个共享锁，您必须先以只读权限打开文件，而请求独占锁时则需要写权限。
+			
+			锁定区域的范围不一定要限制在文件的 size 值以内，锁可以扩展从而超出文件尾。
+			
+			FileLock 类封装一个锁定的文件区域。
 			
 			如果所有的锁都是强制性的（mandatory）
 			
@@ -311,25 +347,263 @@
 	3.4 内存映射文件
 		
 		新的 FileChannel 类提供了一个名为 map( )的方法，该方法可以在一个打开的文件和一个特殊类型的 ByteBuffer 之间建立一个虚拟内存映射
-	
+		
+		通过内存映射机制来访问一个文件会比使用常规方法读写高效得多，甚至比使用通道的效率都高。因为不需要做明确的系统调用，那会很消耗时间。更重要的是，操作系统的虚拟内存可以自动缓存内存页（memory page）。这些页是用系统内存来缓存的，所以不会消耗 Java 虚拟机内存堆（memory heap）。
+		
+		buffer = fileChannel.map (FileChannel.MapMode.READ_ONLY, 100, 200);
+		映射文件是只读的，且读取100到200包含200的数据
+		
+		与文件锁的范围机制不一样，映射文件的范围不应超过文件的实际大小。因为当你请求超过匹配映射的大小时，文件大小值会膨胀，即时你只是一个读映射，系统会认为你修改了文件，抛出Io异常。
+		
+		如果通道是以只读的权限打开的而您却请求 MapMode.READ_WRITE 模式，那么map( )方法会抛出一个 NonWritableChannelException 异常
+
 		通过内存映射机制来访问一个文件会比使用常规方法读写高效得多，甚至比使用通道的效率都高。
 		
 		三种模式
 			
 			MapMode.READ_ONLY
 				
-				只读
+				只读				
 			
 			MapMode.READ_WRITE 
 			
-				允许修改映射的文件，
+				可读可写，
 				
 			MapMode.PRIVATE
 	
-				表示您想要一个写时拷贝（copy-on-write）的映射，该过程不会对底层文件做任何修改
+				表示您想要一个写时拷贝（copy-on-write）的映射，该过程不会对底层文件做任何修改。而且一旦缓冲区被施以垃圾收集动作（garbage collected），那些修改都会丢失。尽管写时拷贝的映射可以防止底层文件被修改，您也必须以 read/write 权限来打开文件以建立 MapMode.PRIVATE 映射。只有这样，返回的MappedByteBuffer 对象才能允许使用 put( )方法。
 				
-				 unmap( )：一个映射一旦建立之后将保持有效，直到MappedByteBuffer 对象被施以垃圾收集动作为止。
-				 
+				选择使用 MapMode.PRIVATE 模式并不会导致您的缓冲区看不到通过其他方式对文件所做的修改。对文件某个区域的修改在使用 MapMode.PRIVATE 模式的缓冲区中都能反映出来，除非该缓冲区已经修改了文件上的同一个区域。
+				
+				同锁不一样的是，映射缓冲区没有绑定到创建它们的通道上。
+
+				一个映射一旦建立之后将保持有效，直到MappedByteBuffer 对象被施以垃圾收集动作为止。
+				
+			MemoryMappedBuffer 直接反映它所关联的磁盘文件。如果映射有效时文件大小变化了，那么缓冲区的部分或全部内容都可能无法访问，并将返回未定义的数据或者抛出未检查的异常。
+			
+			所有的 MappedByteBuffer 对象都是直接的，这意味着它们占用的内存空间位于 Java 虚拟机内存堆之外
+			
+		MappedByteBuffer
+			MappedByteBuffer load( )：
+				加载整个文件以使它常驻内存。
+				然而，load( )方法返回并不能保证文件就会完全常驻内存，这是由于请求页面调入（demand paging）是动态的
+				对于那些要求近乎实时访问（near-realtime access）的程序，解决方案就是预加载。
+				
+			boolean isLoaded( )
+				判断一个被映射的文件是否完全常驻内存了
+				因为是异步的，所以不能完全确定在该方法判断完后，映射文件是否加载完。
+			MappedByteBuffer force( )
+				 强制将映射缓冲区上的更改应用到永久磁盘存储器上
+				 如果映射是以 MapMode.READ_ONLY 或 MAP_MODE.PRIVATE 模式建立的，那么调用 force( )方法将不起任何作用，因为永远不会有更改需要应用到磁盘上
+		我们下面的测试会用到RandomAccessFile，这里大概介绍一下RandomAccessFile！
+
+        1、是JAVA I/O流体系中功能最丰富的文件内容访问类，它提供了众多方法来访问文件内容。
+
+        2、由于可以自由访问文件的任意位置，所以如果需要访问文件的部分内容，RandomAccessFile将是更好的选择。
+
+        3、可以用来访问保存数据记录的文件，文件的记录的大小不必相同，但是其大小和位置必须是可知的。
+
+       新建RandomAccessFile：	
+			RandomAccessFile raf = newRandomAccessFile(File file, String mode);
+			mode有种选择
+				"r":只允许只读方式打开，不允许write
+				"rw":允许读和写，如果文件不存在，就会尝试创建该文件
+				"rws":允许写和读，要求对文件的内容或元数据的每个更新都同步写入到底层存储设备
+				"rwd":允许写和读，要求对文件的内容的每个更新都同步写入到底层存储设备
+			
+			
+		3.4.1 Channel-to-Channel  传输
+			FileChannel
+				abstract long transferTo (long position, long count,WritableByteChannel target)				
+				abstract long transferFrom (ReadableByteChannel src,long position, long count)
+				transferTo( )和 transferFrom( )方法允许将一个通道交叉连接到另一个通道，而不需要通过一个中间缓冲区来传递数据。只有 FileChannel 类有这两个方法。因此 channel-to-channel 传输中通道之一必须是 FileChannel。
+				
+				不过 socket 通道实现WritableByteChannel 和 ReadableByteChannel 接口，因此文件的内容可以用 transferTo( )方法传输给一个 socket 通道，或者也可以用 transferFrom( )方法将数据从一个 socket 通道直接读取到一个文件中。
+				
+			直接的通道传输不会更新与某个 FileChannel 关联的 position 值。请求的数据传输将从position 参数指定的位置开始，传输的字节数不超过 count 参数的值。
+			
+			对于传输数据来源是一个文件的 transferTo( )方法，如果 position + count 的值大于文件的 size 值，传输会在文件尾的位置终止。	
+			
+			传输的目的地是一个非阻塞模式的 socket 通道，那么当发送队列（send queue）满了之后传输就可能终止，并且如果输出队列（output queue）已满的话可能不会发送任何数据。
+			
+			Channel-to-channel 传输是可以极其快速的
+	
+	3.5 Socket通道(套接字通道)
+		新的 socket 通道类可以运行非阻塞模式并且是可选择的。
+		
+		借助新的 NIO 类，一个或几个线程就可以管理成百上千的活动 socket 连接了并且只有很少甚至可能没有性能损失。
+		
+		DatagramChannel 和 SocketChannel 实现定义读和写功能的接口
+		ServerSocketChannel 负责监听传入的连接和创建新的 SocketChannel 对象，它本身从不传输数据。
+		全部 socket 通道类（DatagramChannel、SocketChannel 和 ServerSocketChannel）
+		
+		Socket 通道委派协议操作给对等 socket 对象
+		
+		3.5.1 非阻塞模式
+		
+			Socket 通道可以在非阻塞模式下运行。
+			
+			要把一个 socket 通道置于非阻塞模式，我们要依靠所有 socket 通道类的公有超级类：SelectableChannel。
+			
+			有条件选择是一种可以用来查询通道的机制，该查询判断该通道是否可以进行下一个目标操作。如读或写。
+		
+			SelectableChannel
+				abstract void configureBlocking (boolean block)：
+					设置或重新设置一个通道的阻塞模式是很简单的，只要调用 configureBlocking( )方法即可
+				abstract boolean isBlocking( );
+					判断某个 socket 通道当前处于哪种模式：
+				abstract Object blockingLock( );	
+					该方法会返回一个非透明的对象引用。返回的对象是通道实现修改阻塞模式时内部使用的。只有拥有此对象的锁的线程才能更改通道的阻塞模式
+			
+		3.5.1 ServerSocketChannel
+			
+			SocketChannel 对应 Socket，
+			 
+			public static ServerSocketChannel open( ) throws IOException
+				创建一个新的ServerSocketDChannel对象，将会返回一个未绑定的SeverSocket关联的通道。该对等 ServerSocket 可以通过在返回的 ServerSocketChannel 上调用 socket( )方法来获取。由于 ServerSocketChannel 没有 bind( )方法，因此有必要取出对等的 socket 并使用它来绑定到一个端口以开始监听连接。
+				
+				ServerSocketChannel ssc = ServerSocketChannel.open( );
+				ServerSocket serverSocket = ssc.socket( );
+				// Listen on port 1234
+				101
+				serverSocket.bind (new InetSocketAddress (1234));
+				
+			public abstract ServerSocket socket( );
+			
+			public abstract ServerSocket accept( ) throws IOException;
+			
+			public final int validOps( )
+			
+			ServerSocketChannel 是一个基于通道的 socket 监听器,它增加了通道语义，因此能够在非阻塞模式下运行。
+		
+		3.5.3 SocketChannel
+		
+			ServerSocketChannel 对应 ServerSocket
+			
+			Socket 和 SocketChannel 类封装点对点、有序的网络连接，类似于我们所熟知并喜爱的 TCP/IP网络连接。SocketChannel 扮演客户端发起同一个监听服务器的连接。直到连接成功，它才能收到数据并且只会从连接到的地址接收。
+			
+			虽然每个 SocketChannel 对象都会创建一个对等的 Socket 对象，反过来却不成立。直接创建的 Socket 对象不会关联 SocketChannel 对象，它们的getChannel( )方法只返回 null。
+			
+			在一个未连接的 SocketChannel 对象上尝试一个 I/O 操作会导致 NotYetConnectedException 异常。
+			
+			我们可以通过在通道上直接调用 connect( )方法或在通道关联的 Socket 对象上调用 connect( )来将该 socket 通道连接。连接后，连接状态会一直持续到直到被关闭。
+			
+			SocketChannel socketChannel = SocketChannel.open (new InetSocketAddress ("somehost", somePort));
+			
+			SocketChannel不能指定连接超时的值，在非阻塞模式下，发送的请求会立即返回值，如果是true就是连接成功。如果不能连接。就返回false，并持续连接建立过程
+			
+			面向流的socket建立连接需要一定的时间，因为两个待连接系统之间必须进行包对话以建立维护流socket所需的状态信息。
+			
+			SocketChannel
+				public static SocketChannel open( ) throws IOException：
+				public static SocketChannel open (InetSocketAddress remote)：
+				public abstract Socket socket( );
+				public abstract boolean connect (SocketAddress remote)：
+				public abstract boolean isConnectionPending( );
+				public abstract boolean finishConnect( ) throws IOException;
+					如果此时通道还没有调用connect()开始取连接，调用finishConnect()会报异常。
+					该方法调用是确定完成连接过程，是返回true，还没有返回false。
+					
+				public abstract boolean isConnected( );
+					一旦连接建立过程成功完成，isConnected( )将返回 true
+				public final int validOps( )：				
+			
+			Socket 通道是线程安全的。
+			
+			任何时候都只有一个读操作和一个写操作在进行中。
+		
+			它们可以保证发送的字节会按照顺序到达但无法承诺维持字节分组。例如：某个发送器可能给一个 socket 写入了20 个字节而接收器调用 read( )方法时却只收到了其中的 3 个字节。
+			
+			connect( )和 finishConnect( )方法是互相同步的
+			
+		3.5.4 DatagramChannel：数据报通道
+			
+			DatagramChannel 关联DatagramSocket
+			
+			正如 SocketChannel 模拟连接导向的流协议（如 TCP/IP），DatagramChannel 则模拟包导向的无连接协议（如 UDP/IP）：
+			
+			DatagramChannel
+				public static DatagramChannel open( ) throws IOException
+					创建实例
+				public abstract DatagramSocket socket( );
+					获取对等的 DatagramSocket
+				public abstract DatagramChannel connect (SocketAddress remote)
+					可以设置，只接受自己制定地址的数据包，其他路径的数据包都被无视丢弃。
+				public abstract boolean isConnected( );
+					使用 isConnected( )方法来测试一个数据报通道的连接状态。
+				public abstract DatagramChannel disconnect( ) throws IOException;
+				public abstract SocketAddress receive (ByteBuffer dst)
+					receive( )方法将下次将传入的数据报的数据净荷复制到预备好的 ByteBuffer 中并返回一个SocketAddress 对象以指出数据来源。
+					如果通道处于阻塞模式，receive( )可能无限期地休眠直到有包到达。如果是非阻塞模式，当没有可接收的包时则会返回 null。
+					如果包内的数据超出缓冲区能承受的范围，多出的数据都会被悄悄地丢弃。
+				public abstract int send (ByteBuffer src, SocketAddress target)
+					调用 send( )会发送给定 ByteBuffer 对象的内容到给定 SocketAddress 对象所描述的目的地址和端口，内容范围为从当前 position 开始到末尾处结束。
+					如果 DatagramChannel 对象处于阻塞模式，调用线程可能会休眠直到数据报被加入传输队列。
+					如果通道是非阻塞的，返回值要么是字节缓冲区的字节数，要么是“0”。
+					发送数据报是一个全有或全无（all-or-nothing）的行为。
+					如果传输队列没有足够空间来承载整个数据报，那么什么内容都不会被发送。
+					请注意，数据报协议的不可靠性是固有的，它们不对数据传输做保证。send( )方法返回的非零值并不表示数据报到达了目的地，仅代表数据报被成功加到本地网络层的传输队列。
+				public abstract int read (ByteBuffer dst) throws IOException;
+				public abstract long read (ByteBuffer [] dsts) throws IOException;
+				public abstract long read (ByteBuffer [] dsts, int offset,int length)
+				public abstract int write (ByteBuffer src) throws IOException;
+				public abstract long write(ByteBuffer[] srcs) throws IOException;
+				public abstract long write(ByteBuffer[] srcs, int offset,int length)			
+		
+			DatagramChannel 对象既可以充当服务器（监听者）也可以充当客户端（发送者）。
+			
+			DatagramChannel 是无连接的。每个数据报（datagram）都是一个自包含的实体，拥有它自己的目的地址及不依赖其他数据报的数据净荷。
+		
+			与面向流的的 socket 不同，DatagramChannel 可以发送单独的数据报给不同的目的地址。
+			
+			一个未绑定的 DatagramChannel 仍能接收数据包。当一个底层 socket 被创建时，一个动态生成的端口号就会分配给它。
+			
+			数据的实际发送或接收是通过 send( )和 receive( )方法来实现的：
+			
+			DatagramChannel 对象可以任意次数地进行连接或断开连接。每次连接都可以到一个不同的远程地址。
+			
+			数据报的吞吐量要比流协议高很多
+			
+			在以下情况下，选择数据报socket而不选择流socket
+				您的程序可以承受数据丢失或无序的数据。
+			 	您希望“发射后不管”（fire and forget）而不需要知道您发送的包是否已接收。
+			 	数据吞吐量比可靠性更重要。
+			 	您需要同时发送数据给多个接受者（多播或者广播）。
+			 	包隐喻比流隐喻更适合手边的任务。
+	
+	3.6 管道（pie）
+		
+		广义上讲，管道就是一个用来在两个实体之间单向传输数据的导管。
+		
+		Pipe 类实现一个管道范例，不过它所创建的管道是进程内（在 Java 虚拟机进程内部）而非进程间使用的。
+		
+		Pipe 类创建一对提供环回机制的 Channel 对象。这两个通道的远端是连接起来的，以便任何写在 SinkChannel 对象上的数据都能出现在 SourceChannel 对象上。
+		
+		Pipe
+			public static Pipe open( ) throws IOException
+				创建管道
+			public abstract SourceChannel source( );
+			public abstract SinkChannel sink( );		
+		
+		Pipe 类定义了两个嵌套的通道类来实现管路。这两个类是 Pipe.SourceChannel（管道负责读的一端）和 Pipe.SinkChannel（管道负责写的一端）。
+		
+		这两个通道实例是在 Pipe 对象创建的同时被创建的，可以通过在 Pipe 对象上分别调用 source( )和 sink( )方法来取回。
+		
+		pipe 通道可以同选择器一起使用
+		 
+			管道可以被用来仅在同一个 Java 虚拟机内部传输数据。
+			
+			虽然有更加有效率的方式来在线程之间传输数据，但是使用管道的好处在于封装性。
+		
+		Pipes 的另一个有用之处是可以用来辅助测试。
+			一个单元测试框架可以将某个待测试的类连接到管道的“写”端并检查管道的“读”端出来的数据。
+			
+		管路所能承载的数据量是依赖实现的（implementation-dependent）。
+			唯一可保证的是写到SinkChannel 中的字节都能按照同样的顺序在 SourceChannel 上重现。
+			
+	3.7 通道工具类
+		
+	
 4 选择器
 	
 	4.1 选择器的基础
@@ -372,29 +646,394 @@
 				SelectableChannel.register( ) 返回并提供一个表示这种注册关系的标记。选择键包含了
 				两个比特集（以整数的形式进行编码），指示了该注册关系所关心的通道操作，以及通道已经准备
 				好的操作。
+				
+			SelectableChannel（可选择通道）
+				public abstract SelectionKey register (Selector sel, int ops)
+					将通道注册到一个选择器上，如果注册阻塞的通道。会抛异常。
+					通道一旦被注册，就不能回到阻塞状态。视图这么做，也会抛异常的。
+				public abstract SelectionKey register (Selector sel, int ops,Object att)
+					返回一个封装了两个对象的关系的选择键对象。最后的att就是附加的附件
+				public abstract boolean isRegistered( );
+				public abstract SelectionKey keyFor (Selector sel);
+				public abstract int validOps( );
+				public abstract void configureBlocking (boolean block)
+				public abstract boolean isBlocking( );
+				public abstract Object blockingLock( );	
+	
+				通道在被注册到一个选择器上之前，必须先设置为非阻塞模式（通过调用 configureBlocking(false)）。
+				
+			Selector（选择器）
+				public static Selector open( ) throws IOException
+					实例化
+				public abstract boolean isOpen( );
+					测试一个选择器是否处于被打开状态被打开状态
+				public abstract void close( ) throws IOException;
+					是使用的时候调用这个，释放内存，并将相关的选择键设置为无效。
+				public abstract SelectionProvider provider( );
+					决定由哪个 SelectorProvider 对象来创建给定的 Selector 实例
+				public abstract int select( ) throws IOException;
+				public abstract int select (long timeout) throws IOException;
+				public abstract int selectNow( ) throws IOException;
+				public abstract void wakeup( );
+				public abstract Set keys( );
+				public abstract Set selectedKeys( );	
+				
+				选择器维护了一个需要监控的通道的集合。
+				
+				一个给定的通道可以被注册到多于一个 的选 择器上 ，而 且不 需要 知道它 被注 册了 那个 Selector 对象上 。
+	
+			SelectionKey（选择键）
+				public static final int OP_READ
+				public static final int OP_WRITE
+				public static final int OP_CONNECT
+				public static final int OP_ACCEPT
+				public abstract SelectableChannel channel( );
+				public abstract Selector selector( );
+				public abstract void cancel( );
+				public abstract boolean isValid( );
+				public abstract int interestOps( );
+				public abstract void interestOps (int ops);
+				public abstract int readyOps( );
+				public final boolean isReadable( )
+				public final boolean isWritable( )
+				public final boolean isConnectable( )
+				public final boolean isAcceptable( )
+				public final Object attach (Object ob)
+				public final Object attachment( )	
 	
 	
+			选择器才是提供管理功能的对象，而不是可选择通道对象。选择器对象对注册到它之上的通道执行就绪选择，并管理选择键。
+			
+			SelectableChannel（可选择通道）
+				public abstract SelectionKey register (Selector sel, int ops)
+					往选择器上注册通道
+				public abstract SelectionKey register (Selector sel, int ops,Object att)
+				public abstract boolean isRegistered( );
+					可以调用 isRegistered( )方法来检查一个通道是否被注册到任何一个选择器上。
+					这个方法没有提供关于通道被注册到哪个选择器上的信息，而只能知道它至少被注册到了一个选择器上。
+					在一个键被取消之后，直到通道被注销为止，可能有时间上的延迟。这个方法只是一个提示，而不是确切的答案。
+				public abstract SelectionKey keyFor (Selector sel);
+					返回与该通道和指定的选择器相关的键
+				public abstract int validOps( );	
+					获取特定的通道所支持的操作集合
+					
+			选择器包含了注册到它们之上的通道的集合。
 	
+			请务必在键可能被取消的情况下检查 SelectionKey 对象的状态。因为将一个通道注册到一个相关的键已经被取消的选择器上，而通道仍然处于被注册的状态的时候。
+			
+			一个单独的通道对象可以被注册到多个选择器上。
+			
+			任何一个通道和选择器的注册关系都被封装在一个 SelectionKey 对象中
+			
+		4.1.2 建立选择器
+			
+			看代码：
+			Selector selector = Selector.open( );
+			channel1.register (selector, SelectionKey.OP_READ);
+			选择器才是提供管理功能的对象，而不是可选择通道对象。选择器对象对注
+			册到它之上的通道执行就绪选择，并管理选择键。
+			channel2.register (selector, SelectionKey.OP_WRITE);
+			channel3.register (selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+			// Wait up to 10 seconds for a channel to become ready
+			readyCount = selector.select (10000);			
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	4.2 使用选择键
 		
+		SelectionKey
+			public static final int OP_WRITE
+			public static final int OP_CONNECT
+			public static final int OP_ACCEPT
+			
+			public abstract SelectableChannel channel( );
+				返回与该键相关的SelectableChannel 对象
+				
+			public abstract Selector selector( );
+				返回相关的 Selector 对象
+				
+			public abstract void cancel( );
+				终结键对象和通道的关系，，不会立即取消，只是会放放在选择器的已取消的集合里，注册不会立即被取消，但键会立即失效。当再次调用选择器的select()时，已取消的键的集合中的被取消的键就会被清理掉。并且相应的注销也将完成。通道会被注销，而新的SelectionKey将被返回。
+				
+			public abstract boolean isValid( );
+				检查选择键是都仍然表示一种有效关系
+				
+			public abstract int interestOps( );
+				获取当前的 interest 集合
+				
+			public abstract void interestOps (int ops);
+			
+			public abstract int readyOps( );
+				获取相关的通道的已经就绪的操作
+				
+			public final boolean isReadable( )
+			public final boolean isWritable( )
+			public final boolean isConnectable( )
+			public final boolean isAcceptable( )
+			
+			public final Object attach (Object ob)
+				attach( )方法将在键对象中保存所提供的对象的引用。SelectionKey 类除了保存它之外，不会将它用于任何其他用途。任何一个之前保存在键中的附件引用都会被替换
+			
+			public final Object attachment( )	
+				调用 attachment( )方法来获取与键关联的附件句柄。如果没有附件，或者显式地通过 null 方法进行过设置，这个方法将返回 null。
 		
+		一个键表示了一个特定的通道对象和一个特定的选择器对象之间的注册关系 。
 		
+		当通道关闭时，所有相关的键会自动取消
 		
+		当选择器关闭时，所有被注册到该选择器的通道都将被注销，并且相关的键将立即被无效化（取消）。一旦键被无效化，调用它的与选择相关的方法就将抛出 CancelledKeyException。
 		
+		这个 interset 集合永远不会被选择器改变，但您可以通过调用 interestOps( )方法并传入一个新的比特掩码参数来改变它。
 		
+		ready 集合是 interest集合的子集，并且表示了 interest 集合中从上次调用 select( )以来已经就绪的那些操作。
 		
+		有四个通道操作可以被用于测试就绪状态
+			isReadable( )，isWritable( )，isConnectable( )， 和 isAcceptable( )
+			
+		选择器中不能直接改变键的ready集合。
 		
+		attach和attachment方法是允许您在键上放置一个“附件”，并在后面获取它。
 		
+		如果选择键的存续时间很长，但您附加的对象不应该存在那么长时间，请记得在完成后清理附件。否则，您附加的对象将不能被垃圾回收，您将会面临内存泄漏问题。
 		
+		总体上说，SelectionKey 对象是线程安全的，但知道修改 interest 集合的操作是通过 Selector 对象进行同步的是很重要的。这可能会导致 interestOps( )方法的调用会阻塞不确定长的一段时间。
+		
+	4.3 使用选择器
+		
+		4.3.1 选择过程
+	
+			Selector
+				public abstract Set keys( );
+					返回已注册的键的集合
+				public abstract Set selectedKeys( );
+					返回通道已经就绪的键的集合
+				public abstract int select( ) throws IOException;
+					无线阻塞，直到有通道就绪了
+				public abstract int select (long timeout) throws IOException;
+					设置超时时间，让该线程不要一直阻塞
+				public abstract int selectNow( ) throws IOException;
+					不等待若没有就绪的通道直接返回0
+				public abstract void wakeup( );		
+				
+			已注册的键的集合(Registered key set)
+				通过keys（）方法返回已注册的键的集合，注册是并不一定都仍有效，这个集合是不可以直接修改的，视图这么做会报 java.lang.UnsupportedOperationException
+			
+			已选择的键的集合(Selected key set)
+				已注册的键的集合的子集。这个集合的每个成员的相关通道都是被选择器判断为已经选择好的。并且包含interest集合中的操作。通过selectedKeys()方法返回。
+				已选择的键的集合和redy集合是不一样的，已选择的键的集合是选择器中的集合，这些集合中的键所关联的通道已经准备好的操作就存在ready集合中，且ready内嵌在键中。
+				键可以直接从这个集合中移除，但是不能添加。
+				
+			已取消的键的集合(Cancelled key set)
+				已注册的键的集合的子集，这个子集包含了cancel()方法被调用过的键（这个键已经被无效化），但他们还没有被注销。
+				这个集合是选择器对象的私有成员，不能直接访问。
+			
+			在一个刚初始化的Selector对象中，这三个集合都是空的。
+		
+			Selector 类的核心是选择过程
+		
+			选择操作是当三种形式的 select( )中的任意一种被调用时，由选择器执行的。不管是哪一种形式的调用，下面步骤将被执行：
+				
+				1.已取消的键的集合将会被检查。如果它是非空的，每个已取消的键的集合中的键将从另外两个集合中移除，并且相关的通道将被注销。这个步骤结束后，已取消的键的集合将是空的。
+				
+				2.已注册的键的集合中的键的 interest 集合将被检查。在这个步骤中的检查执行过后，对interest 集合的改动不会影响剩余的检查过程。
+				
+					调用select方法时，如果没有通道已经准备好，线程可能会在这时阻塞，通常会有一个超时值。
+
+					对于那些还没准备好的通道将不会执行任何的操作。
+				
+					对于那些操作系统指示至少已经准备好 interest 集合中的一种操作的通道，将执行以下两种操作中的一种：
+				
+					a.如果通道的键还没有处于已选择的键的集合中，那么键的 ready 集合将被清空，然后表示操作系统发现的当前通道已经准备好的操作的比特掩码将被设置。
+			
+					b.否则，也就是键在已选择的键的集合中。键的 ready 集合将被表示操作系统发现的当前已经准备好的操作的比特掩码更新。所有之前的已经不再是就绪状态的操作不会被清除。事实上，所有的比特位都不会被清理。由操作系统决定的 ready 集合是与之前的 ready 集合按位分离的，一旦键被放置于选择器的已选择的键的集合中，它的 ready 集合将是累积的。比特位只会被设置，不会被清理。
+				
+				3.步骤 2 可能会花费很长时间，特别是所激发的线程处于休眠状态时。与该选择器相关的键可能会同时被取消。当步骤 2 结束时，步骤 1 将重新执行，以完成任意一个在选择进行的过程中，键已经被取消的通道的注销。
+				
+				4.select 操作返回的值是 ready 集合在步骤 2 中被修改的键的数量，而不是已选择的键的集合中的通道的总数。
+		
+				使用内部的已取消的键的集合来延迟注销，是一种防止线程在取消键时阻塞，并防止与正在进行的选择操作冲突的优化。
+		
+			Selector 类的 select( )方法有以下三种不同的形式：
+		
+			selectNow()方法执行就绪检查过程，但不阻塞。如果当前没有通道就绪，它将立即返回 0。
+		
+		4.3.2 停止选择过程
+			
+			Selector
+				public abstract void wakeup( );		
+				
+			wakeup( )，提供了使线程从被阻塞的 select( )方法中优雅地退出的能力。
+			
+			有三种方式可以唤醒在 select( )方法中睡眠的线程：
+				调用 wakeup( )
+					调用wakeup()方法会让选择器上的第一个还没有返回的选择操作立即返回。如果当前没有进行中的选择，那么下一次调用的select（）方法会立即返回。后续的选择操纵会正常进行。
+					在选择操作期间多次调用wakeup()方法与调用它一次没有什么不同。
+					有时候，我们不需要这种延迟唤醒，那么在调用wakeup()后，再调用selectNow()方法来绕过这个问题。
+				调用 close( )
+					调用一个close()方法，任何一个在选择操作中阻塞的select()方法都会被唤醒，与选择器相关的通道会被注销，键也会被取消。
+					
+				调用 interrupt( )
+					睡眠中的线程的interrupt()被调用，它的返回状态将被设置。如果唤醒线程之后将视图在通道上执行I/O操作，通道将立即关闭。
+				
+		
+			请注意这些方法中的任意一个都不会关闭任何一个相关的通道。中断一个选择器与中断一个通道是不一样的（参见 3.3 节）。选择器不会改变任意一个相关的通道，它只会检查它们的状态。当一个在 select( )方法中睡眠的线程中断时，对于通道的状态而言，是不会产生歧义的。
+		
+		4.3.3 管理选择键
+			
+			选择是累积的。
+			一旦一个选择器讲一个键添加到已选择的键的集合中，这个键就不会被移除
+			一旦一个键处于已选择集合中，这个键的ready集合将只会被设置，而不会被清理。
+		
+			合理地使用选择器的秘诀是理解选择器维护的选择键集合所扮演的角色。
+		
+			一旦通道上一个操作就绪时，相关联的键的read集合就会被清空，然后把已经继续的操作加进来。然后这个键就会被添加到已选择的集合中。
+			
+			清理一个 SelectKey 的 ready 集合的方式是将这个键从已选择的键的集合中移除。因为只有存在已选择集合中的键才被认为是合法的，这些键会长久存在，不会被清理，知道被移除。
+		
+			close()方法与select（）方法一样。也有可能一直阻塞。
+			还在进行的选择过程中，所有对close()的调用都会被阻塞，直到选择过程结束，或者执行选择的线程进入睡眠。
+解析代码：
+public class SelectSockets {
+    public static int PORT_NUMBER = 1234;
+    public static void main(String[] argv) throws Exception {
+        new SelectSockets().go(argv);
+    }
+    public void go(String[] argv) throws Exception {
+        int port = PORT_NUMBER;
+        if (argv.length > 0) { // Override default listen port
+            port = Integer.parseInt(argv[0]);
+        }
+        System.out.println("Listening on port" + port);
+        // Allocate an unbound server socket channel 创建一个新的选择通道
+        ServerSocketChannel serverChannel = ServerSocketChannel.open();
+        // Get the associated ServerSocket to bind it with  获得相关的socket对象
+        ServerSocket serverSocket = serverChannel.socket();
+        // Create a new Selector for use below 创建一个新的选择器
+        Selector selector = Selector.open();
+        // Set the port the server channel will listen to 将端口与socket对象绑定起来
+        serverSocket.bind(new InetSocketAddress(port));
+        // Set nonblocking mode for the listening socket  设定成非阻塞模式
+        serverChannel.configureBlocking(false);
+        // Register the ServerSocketChannel with the Selector 将通道注册到选择器上
+        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+        while (true) {
+        // This may block for a long time. Upon returning, the这个可能阻塞很长时间
+        // selected set contains keys of the ready channels. 选择器包含通道已经准备就绪的集合
+            int n = selector.select();
+            if (n == 0) {
+                continue; // nothing to do没有准备就绪的通道，继续
+            }
+            // Get an iterator over the set of selected keys 获取一个选择键集合的迭代器
+            Iterator it = selector.selectedKeys().iterator();
+            // Look at each key in the selected set 查看已选择集合中的每一个键
+            while (it.hasNext()) {
+                SelectionKey key = (SelectionKey) it.next();
+                // Is a new connection coming in?  键是否就绪
+                if (key.isAcceptable()) {
+                    ServerSocketChannel server =
+                            (ServerSocketChannel) key.channel();
+                    SocketChannel channel = server.accept();//若通道就绪，调用accept会返回就绪的通道
+                    registerChannel(selector, channel,
+                            SelectionKey.OP_READ);
+                    sayHello(channel);
+                }
+                // Is there data to read on this channel? //在通道上是否有数据可以读取
+                if (key.isReadable()) {
+                    readDataFromSocket(key);
+                }
+                // Remove key from selected set; it's been handled  //从已选择键的集合上移除该键，他已经被注销。
+                it.remove();
+            }
+        }
+    }
+// ----------------------------------------------------------
+    /** 将通道注册在选择器上和操作
+     * Register the given channel with the given selector for the given
+     * operations of interest
+     */
+    protected void registerChannel(Selector selector,
+                                   SelectableChannel channel, int ops) throws Exception {
+        if (channel == null) {
+            return; // could happen 可能发生
+        }
+        // Set the new channel nonblocking 设置新通道为非阻塞模式
+        channel.configureBlocking(false);
+        // Register it with the selector 注册到选择器上
+        channel.register(selector, ops);
+    }
+    // ----------------------------------------------------------
+    // Use the same byte buffer for all channels. A single thread is 
+    // servicing all the channels, so no danger of concurrent acccess.
+    // 所有的通道用一样的字节流，一个单线程服务于所有的通道，所以对于并发请求的是无危险。
+    private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+    /**
+     * Sample data handler method for a channel with data ready to read.
+     * 带有准备被读取数据的一个通道的样本数据处理方法
+     * @param key
+     * A SelectionKey object associated with a channel determined by
+     * the selector to be ready for reading. If the channel returns
+        一个已选择键集合对象与一个由选择器去读和被读的通道之间有关系
+     * an EOF condition, it is closed here, which automatically
+     * invalidates the associated key. The selector will then
+     * de-register the channel on the next select call.
+     */
+//    如果通道返回一个EOF条件，他是关闭的，而且是自动的。验证和有关系的键，这个选择器然后回注册通道给下一个请求的选择器
+    protected void readDataFromSocket(SelectionKey key) throws Exception {
+        SocketChannel socketChannel = (SocketChannel) key.channel();
+        int count;
+        buffer.clear(); // Empty buffer
+        // Loop while data is available; channel is nonblocking
+        while ((count = socketChannel.read(buffer)) > 0) {
+            buffer.flip(); // Make buffer readable
+            // Send the data; don't assume it goes all at once
+            while (buffer.hasRemaining()) {
+                socketChannel.write(buffer);
+            }
+            // WARNING: the above loop is evil. Because
+            // it's writing back to the same nonblocking
+            // channel it read the data from, this code can
+            // potentially spin in a busy loop. In real life
+
+	但这种场景也可以使用与第一个场景十分相似的办法来解决。通道可以根据功能由不同的工作线程来处理。它们可能可以是日志线程池，命令/控制线程池，状态请求线程池，            // you'd do something more useful than this.
+            buffer.clear(); // Empty buffer
+        }
+        if (count < 0) {
+            // Close channel on EOF, invalidates the key
+            socketChannel.close();
+        }
+    }
+}		
+	4.4 异步关闭能力
+		
+		任何时候都可能关闭一个通道或者取消一个选择键。除非我们用同步，否则键和通道的状态的变化都是意料之外的改变。
+		
+		一个特定的键的集合中的一个键的存在不能保证键仍然是有效，或者通道仍然是打开的
+		
+		关闭通道的过程不应该是一个耗时的操作。
+		
+		请不要自己维护键的集合！理解选择的过程！
+		
+		如果你试图使用一个已经失效的键，大多数方法将抛出CancelledKeyException。
+		
+	4.5 选择过程的可扩展性
+		
+		但只使用一个线程来服务所有可选择的通道是否是一个好主意呢？这要看情况。
+		
+		对单 CPU 的系统而言这可能是一个好主意，因为在任何情况下都只有一个线程能够运行。
+		
+		在一个有 n 个 CPU 的系统上，当一个单一的线程线性地轮流处理每一个线程时，可能有 n-1 个 cpu 处于空闲状态。
+		
+		在大量通道上执行就绪选择并不会有很大的开销，大多数工作是由底层操作系统完成的。
+		
+		在第一个场景中，
+			如果您想要将更多的线程来为通道提供服务，一个更好的策略是对所有的可选择通道使用一个选择器，并将对就绪通道的服务委托给其他线程。您只用一个线程监控通道的就绪状态并使用一个协调好的工作线程池来处理共接收到的数据。根据部署的条件，线程池的大小是可以调整的（或者它自己进行动态的调整）。对可选择通道的管理仍然是简单的，而简单的就是好的。
+		
+		第二个场景中，
+			某些通道要求比其他通道更高的响应速度，可以通过使用两个选择器来解决。
+			
+			一个为命令连接服务，另一个为普通连接服务。
+			
+			但这种场景也可以使用与第一个场景十分相似的办法来解决。通道可以根据功能由不同的工作线程来处理。它们可能可以是日志线程池，命令/控制线程池，状态请求线程池，等等。
+			
+			
 		
 		
 		

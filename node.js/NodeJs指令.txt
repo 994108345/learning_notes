@@ -1,0 +1,23 @@
+npm root -g: 查看node.js全局包的安装路径
+ 
+npm root: 查看当前项目npm包的安装路径
+
+npm cache clean：清空缓存
+
+npm ls：查看安装的模块及依赖
+
+npm ls webpack：查看某个安装的模块
+
+npm ls -g：查看全局安装的模块及依赖 npm uninstall xxx (-g)：卸载模块 npm update xxx：更新模块
+
+npm view gulp dependencies: 查看模块的依赖关系
+
+npm view gulp repository.url: 查看模块的源文件地址
+
+npm view npm contributors: 查看模块的贡献者，包含邮箱地址
+
+npm install webpack --save-dev：项目安装webpack，保存到package.json中
+
+npm install webpack@<version> --save-dev：项目安装webpack的指定版本，保存到package.json中
+
+npm init  # 会自动生成一个package.json文件
