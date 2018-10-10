@@ -1,0 +1,191 @@
+LinkedHashMap
+定义：
+哈希表和链表实现的映射接口，具有可预测的迭代顺序。这个实现不同于HashMap，因为它维护一个遍历其所有条目的双向链表。这个链表定义了迭代顺序，这通常是键插入到映射中的顺序(插入顺序)。如果键是已经插入过的，则会直接返回true。
+
+继承关系：
+public class LinkedHashMap<K,V>
+    extends HashMap<K,V>
+    implements Map<K,V>	
+	
+主要成员变量：
+	accessOrder：这个链表HashMpa的迭代排序方法。true:使用请求顺序，false:使用插入顺序。
+		
+	请求顺序：
+		Map<Object,String> map =  new LinkedHashMap(16,0.75F,true);
+		map.put("1","a");
+		map.put("2","b");
+		map.put("3","c");
+		Iterator iter1 = map.entrySet().iterator();
+		while(iter1.hasNext()){
+			Map.Entry entry = (Map.Entry)iter1.next();
+			System.out.println("前"+entry.getValue());
+		}
+		map.get("1");
+		Iterator iter2 = map.entrySet().iterator();
+		while(iter2.hasNext()){
+			Map.Entry entry = (Map.Entry)iter2.next();
+			System.out.println("后"+entry.getValue());
+		}
+
+构造方法：
+	1
+	public LinkedHashMap(int initialCapacity, float loadFactor) {
+        super(initialCapacity, loadFactor);
+        accessOrder = false;
+    }
+	
+	2
+	public LinkedHashMap(int initialCapacity) {
+        super(initialCapacity);
+        accessOrder = false;
+    }
+	
+	3
+	public LinkedHashMap() {
+        super();
+        accessOrder = false;
+    }
+	
+	4
+	public LinkedHashMap(Map<? extends K, ? extends V> m) {
+        super(m);
+        accessOrder = false;
+    }
+	
+	5
+	public LinkedHashMap(int initialCapacity,
+                         float loadFactor,
+                         boolean accessOrder) {
+        super(initialCapacity, loadFactor);
+        this.accessOrder = accessOrder;
+    }
+
+LinkedHashMap的接口：
+	void clear() ：清楚集合中所有的映射内容
+	boolean containsValue(Object value) ：如果mao中存在一个或多个key匹配这个value，返回true
+	V get(Object key) ：根据key获取value
+	protected boolean removeEldestEntry(Map.Entry<K,V> eldest) ：如果map需要清除老的条目，返回true
+
+
+	Returns true if this map should remove its eldest entry. 
+初始化：
+	void init() {
+		//双向链表的头结点，没有存值。
+        header = new Entry<>(-1, null, null, null);
+        header.before = header.after = header;
+    }
+	HashMap构造方法中调用的，在LinkedHashMap中重写逻辑。
+
+
+链表对象：
+		Entry
+			before
+			after
+			hash
+			key
+			value
+			next
+			
+创建LinkedHashMap
+	四个构造方法全部调用了父类HashMap的构造方法，且最后调用的是HashMap的public HashMap(int initialCapacity, float loadFactor) .
+	在这个HashMap的构造方法中，调用了init()方法，LinkedHashMap重写了该方法。方法如下所示：
+		void init() {
+			//双向链表的头结点，没有存值。
+			header = new Entry<>(-1, null, null, null);
+			header.before = header.after = header;
+		}
+	方法中初始化了双向链表的头结点，注意头结点并不放值。
+	同时关注一下LinkedHashMap中的条目Entry对象，该对象继承与HashMap的Entry，并加了两个独有属性before和after
+	Entry
+			before：存在自己插入之前插入的条目
+			after：关联在自己插入之后插入的条目。
+			hash：和HashMap中用法一样，存该key的hash
+			key：和HashMap中用法一样，存key
+			value：和HashMap中用法一样，存value。
+			next：和HashMap中用法一样，存该数组结点链表的下一个条目。
+			
+添加一个key-value，即put()方法
+	LinkedHashMap并没有重写put()方法，直接使用的是HashMap中的put()方法。
+	HashMap的put()方法中，调用了addEntry()方法，LinkedHashMap重写了该方法。
+		void addEntry(int hash, K key, V value, int bucketIndex) {
+			//直接调用父类即HashMap的addEntry()方法，给底层数组添加结点。
+			super.addEntry(hash, key, value, bucketIndex);
+			
+			//removeEldestEntry(Entry<K,V> entry)该方法返回boolean值，LinkedHashMap默认返回false。我们可以重写该方法控制返回的true和false从而控制双向链表的条目的删除。
+			我们可以重写该方法控制返回的true和false从而控制双向链表的条目的删除。
+			Entry<K,V> eldest = header.after;
+			if (removeEldestEntry(eldest)) {
+			//删除指定key的值
+				removeEntryForKey(eldest.key);
+			}
+		}
+	
+	在HashMap的addEntry()方法中，会调用createEntry()方法，LinkedHashMap也重写了这个方法
+
+		createEntry(int hash, K key, V value, int bucketIndex) {
+			HashMap.Entry<K,V> old = table[bucketIndex];
+			Entry<K,V> e = new Entry<>(hash, key, value, old);
+			table[bucketIndex] = e;
+			e.addBefore(header);
+			size++;
+		}
+	其他逻辑都和HashMap一样，需要注意的是e.addBefore(header);该方法就是将条目添加到双向链表里的入口。
+		private void addBefore(Entry<K,V> existingEntry) {
+            after  = existingEntry;
+            before = existingEntry.before;
+            before.after = this;
+            after.before = this;
+        }
+	将成员变量header设置成该结点的上个后结点，即：header -> e -> header.before 
+	链表就这么创建完毕了。
+	
+LinkedHashMap的get()方法。
+	与put()不同，LinkedHashMap的重写了get()方法
+	public V get(Object key) {
+        /*调用HashMap中的get()方法，查找到该结点*/
+        Entry<K,V> e = (Entry<K,V>)getEntry(key);
+        if (e == null)
+            return null;
+        /*根据accessOrder，如果是true，即请求顺序，则将get的值挪到集合的最后一位，如果为false，即插入顺序，则什么都不做*/
+        e.recordAccess(this);
+        return e.value;
+    }
+	
+	想细看看recordAccess(this);方法
+	
+	void recordAccess(HashMap<K,V> m) {
+		LinkedHashMap<K,V> lm = (LinkedHashMap<K,V>)m;
+		if (lm.accessOrder) {
+			lm.modCount++;
+			remove();
+			addBefore(lm.header);
+		}
+	}
+	
+	acceeOrder如果是false，是根据插入顺序排序的，则不修改双向链表中条目的位置。
+	如果是true，是根据请求顺序排序的，会将get的结点移到真个链表的最前方。
+	画图。
+	
+LinkedHashMap.remove(Object key)方法
+	private void remove() {
+            before.after = after;
+            after.before = before;
+    }
+	LinkedHashMap没有重写remove(Object key)方法，所以调用的是HashMap的remove(Object key)方法。
+	在HashMap的remove(Object key)方法中，调用了recordRemoval（HashMap<K,V> m）方法，LinkedHashMap重写了该方法。
+	 void recordRemoval(HashMap<K,V> m) {
+		remove();
+	}
+	并且调用了remove()方法；
+	private void remove() {
+		before.after = after;
+		after.before = before;
+	}
+	通过这个方法删除了双喜那
+	
+	
+	
+	
+	
+	
+	

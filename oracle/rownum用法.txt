@@ -1,0 +1,68 @@
+Rownum是Oracle系统顺序分配的查询结果的行号。返回的第一行为1，第二行是2，以此类推。
+
+rownum = n(n只能=1，n>1查不出值)
+	select * from user_info where rownum = 1 ;可以的
+	select * from  user_Info where rownum = 2 ; 不行
+	
+rownuw > n(大于)
+	select * from user_info where rownum > 1:直接查询也是不可以的
+	要使用子查询，在子查询中加入rownum字段，并使用别名，
+	select * from (select rownum ro ,u.* from user_info u) where ro > 1; 
+
+rownum < n(小于)
+	没人任何限制，可以使用
+	select * from user_info u where rownum < 10; 
+
+rownum < n and rownum > m(范围)
+	查询范围内的数据，必须使用子查询。可以理解长一个大于操作一个小于操作，大于操作必须嵌套子查询。
+	select * from (select rownum ro,u.* from user_info u where rownum < 10) where ro >5; 
+	
+rownum加排序
+	select rownum,u.* from user_info u order by u.id;
+	如果按上诉sql查询并排序是会打乱rownum的顺序的
+	所以要在子查询中先排序，再取rownum
+	select rownum,a.* from (select * from user_info u order by u.id) a where rownum<10;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

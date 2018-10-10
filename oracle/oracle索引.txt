@@ -27,3 +27,64 @@ B*Tree索引
 	B*Tree是最常见的索引结构类型。和二叉树相似。目的是最小化oracle查询时间。
 	
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+走索引和不走索引
+
+	普通索引(time字段加了普通索引)
+		select * from A a where sysdate-a.time < 2;//不走索引
+		改
+		select * from A a where a.time-sysdate > 0;//走索引 索引字段要放在运算符前面
+		
+	组合索引(field1和field2字段加了组合索引，field1字段在field2字段的左边)
+		select * from A a where a.field2 = '1';、//不走索引
+		改
+		select * from A a where a.field1 = '1';、//走索引 组合索引必须先用左边的字段
+		
+		or
+			都不走索引，不管用一个字段还是两个字段
+			
+		and
+			只要用了左边的第一个字段，就会走索引
+			
+	组合索引加普通索引（组合索引为field1和field2，普通索引是id）
+		or
+			select * from wzl_demo d where d.id = '1' or d.field1 = '2';//走组合索引和普通索引
+			select * from wzl_demo d where d.id = '1' or d.field2 = '2';//都不走
+
+			select * from wzl_demo d where d.field1 = '1' or d.id = '2';//走组合索引和普通索引
+			select * from wzl_demo d where d.field2 = '1' or d.id = '2';//都不走
+			
+			当组合索引加普通索引在or语句中，只有or两者都用了正确的索引字段，就都走索引，只要有一方不是正确的索引字段，就都不走索引
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

@@ -1,0 +1,15 @@
+查询分页
+	mysql用limit
+	oracle用rownum
+
+批量插入
+	Oracle的批量插入
+		insert all 
+		  into wzl_demo
+		  (id, field1, field2)
+		values
+		  ('1', '1', '1') 
+		  into wzl_demo
+		  (id, field1, field2)
+		values
+		  ('2', '2', '2') 

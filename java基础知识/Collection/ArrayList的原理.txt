@@ -1,0 +1,143 @@
+定义：
+	实现了List接口的所有方法，可以存所有的元素，包括null。除此之外，还提供了方法对数组的长度。除了实现列表接口外，该类还提供了一些方法来操作内部用于存储列表数组的大小。这个类大致相当于Vector，只是它是不同步的。
+
+类结构：
+	public class ArrayList<E> extends AbstractList<E>
+        implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+		
+成员变量：
+	size：集合的长度
+	elementData：这个就是集合底层的数组了！
+	MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;数组分配的最大长度。在数组头中会保留一些头存取存储其他信息。
+	
+构造方法：
+	1
+	public ArrayList(int initialCapacity) {
+        super();
+        /*容量肯定不能小于0*/
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Capacity: "+
+                                               initialCapacity);
+        this.elementData = new Object[initialCapacity];
+    }
+
+	2
+	public ArrayList() {
+        this(10);
+    }
+
+	3	
+	public ArrayList(Collection<? extends E> c) {
+        /*转成数组*/
+        elementData = c.toArray();
+        /*看看数组的长度*/
+        size = elementData.length;
+        // c.toArray might (incorrectly) not return Object[] (see 6260652)
+        /*c.toArray()可能不会返回Object[]，如果类型不对，需要转化。*/
+        if (elementData.getClass() != Object[].class)
+            elementData = Arrays.copyOf(elementData, size, Object[].class);
+    }	
+	
+ArrayList的add()方法：
+	public boolean add(E e) {
+        ensureCapacityInternal(size + 1);  // Increments modCount!!
+        elementData[size++] = e;
+        return true;
+    }
+	
+	private void ensureCapacityInternal(int minCapacity) {
+        modCount++;//更改次数+1
+        // overflow-conscious code
+        /*当前需要的容量 - 底层数组的容量 > 0 说明次数的底层数组不够用啦，要扩容 */
+        if (minCapacity - elementData.length > 0)
+            grow(minCapacity);
+    }
+	
+	private void grow(int minCapacity) {
+        // overflow-conscious code
+        int oldCapacity = elementData.length;
+        /*扩容百分之五十*/
+        int newCapacity = oldCapacity + (oldCapacity >> 1);
+        /*扩容后还是不够，直接将需要的容量设置为扩容后的容量*/
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        /*如果扩容后的容量大于要求的最大容量，调用方法判断minCapacity是否大于ArrayList允许分配的最大容量*/
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+        // minCapacity is usually close to size, so this is a win:
+		/*创建新的数组，并转移数据*/
+        elementData = Arrays.copyOf(elementData, newCapacity);
+    }
+	
+	/*需要的容量是否大于MAX_ARRAY_SIZE,是的话直接将需要的容量设置为Inteer的最大容量，不是就直接设置为MAX_ARRAY_SIZE*/
+    private static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError();
+        return (minCapacity > MAX_ARRAY_SIZE) ?
+            Integer.MAX_VALUE :
+            MAX_ARRAY_SIZE;
+    }
+	
+ArrayList的get()方法。
+	public E get(int index) {
+        /*检查index是否大于ArrayList本身长度*/
+        rangeCheck(index);
+        /*直接去数组对应小标找到这个值，直接返回*/
+        return elementData(index);
+    }
+	逻辑相当简单
+	
+ArrayList的remove()方法。
+	//注意：既然时序存在多个o，只会移除匹配到的第一个。其他不影响。
+	public boolean remove(Object o) {
+        if (o == null) {
+            for (int index = 0; index < size; index++)
+                if (elementData[index] == null) {
+                    fastRemove(index);
+                    return true;
+                }
+        } else {
+            for (int index = 0; index < size; index++)
+                if (o.equals(elementData[index])) {
+                    fastRemove(index);
+                    return true;
+                }
+        }
+        return false;
+    }
+	
+	public E remove(int index) {
+        rangeCheck(index);
+
+        modCount++;
+        E oldValue = elementData(index);
+        /*需要移动元素的数目*/
+        int numMoved = size - index - 1;
+        if (numMoved > 0)
+            /*在该方法里实现数据的移动*/
+            System.arraycopy(elementData, index+1, elementData, index,
+                             numMoved);
+        /*将无用结点设置为null*/
+        elementData[--size] = null; // Let gc do its work
+        /*返回删除的值*/
+        return oldValue;
+    }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

@@ -1,0 +1,190 @@
+该类已经被淘汰了，如果需要线程安全，使用ConcurrentHashMap
+类继承关系
+	public class Hashtable<K,V>
+    extends Dictionary<K,V>
+    implements Map<K,V>, Cloneable, java.io.Serializable
+	注意Dictionnary的一个已经被遗弃的类。
+
+够造函数
+
+	public Hashtable(int initialCapacity) {
+        this(initialCapacity, 0.75f);
+    }
+	
+	public Hashtable() {
+        this(11, 0.75f);
+    }
+	
+	public Hashtable(Map<? extends K, ? extends V> t) {
+        this(Math.max(2*t.size(), 11), 0.75f);
+        putAll(t);
+    }
+	
+	public Hashtable(int initialCapacity, float loadFactor) {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Capacity: "+
+                                               initialCapacity);
+        if (loadFactor <= 0 || Float.isNaN(loadFactor))
+            throw new IllegalArgumentException("Illegal Load: "+loadFactor);
+
+        if (initialCapacity==0)
+            initialCapacity = 1;
+        this.loadFactor = loadFactor;
+        table = new Entry[initialCapacity];
+        threshold = (int)Math.min(initialCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
+        useAltHashing = sun.misc.VM.isBooted() &&
+                (initialCapacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
+    }
+	
+	看够造方法可知，Hashtable的默认容量是11
+	
+成员变量
+	
+	private transient Entry<K,V>[] table;//底层存储数据的散列表
+	
+	private transient int count;//散列表中存储数据的数量
+	
+	private int threshold;//容量上限 = capacity * loadFactor
+	
+	private float loadFactor;//加载因子
+	
+	private transient int modCount = 0;//增删改查的次数
+	
+	static final int ALTERNATIVE_HASHING_THRESHOLD_DEFAULT = Integer.MAX_VALUE;//map容量的阀值
+	
+put key-value
+	
+	public synchronized V put(K key, V value) {
+        // Make sure the value is not null
+        /*value不能为null*/
+        if (value == null) {
+            throw new NullPointerException();
+        }
+
+        // Makes sure the key is not already in the Hashtable.
+        Entry tab[] = table;
+        int hash = hash(key);
+        int index = (hash & 0x7FFFFFFF) % tab.length;
+        for (Entry<K,V> e = tab[index] ; e != null ; e = e.next) {
+            if ((e.hash == hash) && e.key.equals(key)) {
+                V old = e.value;
+                e.value = value;
+                return old;
+            }
+        }
+
+        modCount++;
+        if (count >= threshold) {
+            // Rehash the table if the threshold is exceeded
+			/*扩容*/
+            rehash();
+
+            tab = table;
+            hash = hash(key);
+            index = (hash & 0x7FFFFFFF) % tab.length;
+        }
+
+        // Creates the new entry.
+        Entry<K,V> e = tab[index];
+        tab[index] = new Entry<>(hash, key, value, e);
+        count++;
+        return null;
+    }
+	
+	protected void rehash() {
+        int oldCapacity = table.length;
+        Entry<K,V>[] oldMap = table;
+
+        // overflow-conscious code
+        /*旧的容量*2 +1*/
+        int newCapacity = (oldCapacity << 1) + 1;
+        /*如果新容量大于MAX_ARAY_SIZE,直接将新容量设置成MAX_ARRAY_SIZE*/
+        if (newCapacity - MAX_ARRAY_SIZE > 0) {
+            if (oldCapacity == MAX_ARRAY_SIZE)
+                // Keep running with MAX_ARRAY_SIZE buckets
+                return;
+            newCapacity = MAX_ARRAY_SIZE;
+        }
+        Entry<K,V>[] newMap = new Entry[newCapacity];
+
+        modCount++;
+        threshold = (int)Math.min(newCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
+        boolean currentAltHashing = useAltHashing;
+        useAltHashing = sun.misc.VM.isBooted() &&
+                (newCapacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
+        boolean rehash = currentAltHashing ^ useAltHashing;
+
+        table = newMap;
+
+        for (int i = oldCapacity ; i-- > 0 ;) {
+            for (Entry<K,V> old = oldMap[i] ; old != null ; ) {
+                Entry<K,V> e = old;
+                old = old.next;
+
+                if (rehash) {
+                    e.hash = hash(e.key);
+                }
+                int index = (e.hash & 0x7FFFFFFF) % newCapacity;
+                e.next = newMap[index];
+                newMap[index] = e;
+            }
+        }
+    }
+
+get key-value
+
+	public synchronized V get(Object key) {
+        Entry tab[] = table;
+        int hash = hash(key);
+        int index = (hash & 0x7FFFFFFF) % tab.length;
+        for (Entry<K,V> e = tab[index] ; e != null ; e = e.next) {
+            if ((e.hash == hash) && e.key.equals(key)) {
+                return e.value;
+            }
+        }
+        return null;
+    }
+	
+	
+	
+主要实现内容和HashMap基本一样，
+	区别在于：
+		1 Hashtable不允许key和value出现null。如果出现会抱异常。
+		2 Hashtable的增删改查操作都是同步的，所以是线程安全的。
+		3 HashMap的扩容是*2，Hashtable的*2+1
+		4 HashMap的初始化长度为16.Hashtable初始化长度是11
+		
+		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+		
+
+	

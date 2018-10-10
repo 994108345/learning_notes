@@ -1,0 +1,110 @@
+类结构
+	public class TreeSet<E> extends AbstractSet<E>
+    implements NavigableSet<E>, Cloneable, java.io.Serializable
+
+成员变量
+	
+	private transient NavigableMap<E,Object> m;
+	
+	private static final Object PRESENT = new Object();
+	
+构造方法
+	
+	TreeSet(NavigableMap<E,Object> m) {
+        this.m = m;
+    }
+	
+	public TreeSet() {
+        this(new TreeMap<E,Object>());
+    }
+	
+	public TreeSet(Comparator<? super E> comparator) {
+        this(new TreeMap<>(comparator));
+    }
+	
+	public TreeSet(Collection<? extends E> c) {
+        this();
+        addAll(c);
+    }
+	
+	public TreeSet(SortedSet<E> s) {
+        this(s.comparator());
+        addAll(s);
+    }
+
+	由构造函数可以看出，所有的构造函数最后都调用第一个构造函数
+	TreeSet(NavigableMap<E,Object> m) {
+        this.m = m;
+    }
+	且传入的都是TreeMap。
+	
+add key-value
+	public boolean add(E e) {
+        return m.put(e, PRESENT)==null;
+    }	
+	
+各种对外的公共方法都是调用TreeMap的方法实现的。
+
+TreeSet自定义排序的Demo
+	@Test
+    public void compareTest(){
+        class DemoComparator implements Comparator<String>{
+            @Override
+            public int compare(String o1, String o2) {
+                if(o1.length()==o2.length() && o1.equals(o2)){
+                    return 0;
+                }else if(o1.length()<o2.length()){
+                    return 1;
+                }else{
+                    return -1;
+                }
+            }
+        }
+        Set set = new TreeSet(new DemoComparator());
+        set.add("a");
+        set.add("aaaa");
+        set.add("aa");
+        set.add("aaaaa");
+        set.add("a");
+        set.add("12345");
+        Iterator itr = set.iterator();
+        while(itr.hasNext()){
+            System.out.println(itr.next().toString());
+        }
+    }
+	输出结果：
+		12345
+		aaaaa
+		aaaa
+		aa
+		a
+	结果是按字符串的长度递减排序
+	
+	Comparator.compare()，如果返回0，则不存这个值;返回正数，则放在left;返回负数，则存在right。
+	
+自然排序：
+	@Test
+	public void naturalTest(){
+		Set set = new TreeSet();
+		set.add("a");
+		set.add("aaaa");
+		set.add("aa");
+		set.add("aaaaa");
+		set.add("a");
+		set.add("12345");
+		Iterator itr = set.iterator();
+		while(itr.hasNext()){
+			System.out.println(itr.next().toString());
+		}
+	}
+	输出结果：
+	12345
+	a
+	aa
+	aaaa
+	aaaaa
+	
+	
+	
+	
+	

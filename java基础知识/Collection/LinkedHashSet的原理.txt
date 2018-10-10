@@ -1,0 +1,57 @@
+LinkedHashSet基于LinkedHashMap，所以性质和LinkedHashMap差不多，LinkedHashSet采用适配器模式。。
+
+适配器模式
+	LinkedHashSet继承HashSet，HashSet中有一个成员变量HashMap map；
+	然后通过HashSet中的方法去调用map的方法。从而达到适配器设计模式的目的。
+	  
+类结构
+	public class LinkedHashSet<E>
+    extends HashSet<E>
+    implements Set<E>, Cloneable, java.io.Serializable
+	
+构造方法
+	public LinkedHashSet(int initialCapacity, float loadFactor) {
+        super(initialCapacity, loadFactor, true);
+    }
+	
+	public LinkedHashSet(int initialCapacity) {
+        super(initialCapacity, .75f, true);
+    }
+	
+	public LinkedHashSet() {
+        super(16, .75f, true);
+    }
+	
+	public LinkedHashSet(Collection<? extends E> c) {
+        super(Math.max(2*c.size(), 11), .75f, true);
+        addAll(c);
+    }
+	
+	注意看所有的构造方法，都调用了父类的三个参数的构造函数，且第三个参数是bool值。
+	
+	查看HashSet中被调用的构造函数
+	HashSet(int initialCapacity, float loadFactor, boolean dummy) {
+        map = new LinkedHashMap<>(initialCapacity, loadFactor);
+    }
+	这个构造方法是构造新的空的链表哈希集合，只能被LinkedHashSet调用，返回一个HashMap的实例是LinkedHashMap类型，且被指定容量和加载因子。
+	
+	所以，LinkedHashSet的所有构造函数，返回的map是一个LinkedHashMap实例，所以使用的方法都是LinkedHashMap的，所以性质都一样，都是用一个链表来记录插入记录的顺序。
+	不同的是，LinkedHashSet的链表只能按照插入顺序存放key。因为要修改链表排序规则需要调用
+	public LinkedHashMap(int initialCapacity,
+                         float loadFactor,
+                         boolean accessOrder) {
+        super(initialCapacity, loadFactor);
+        this.accessOrder = accessOrder;
+    }
+	这个够造方法，但是LinkedHashSet只能调用
+	public LinkedHashMap(int initialCapacity, float loadFactor) {
+        super(initialCapacity, loadFactor);
+        accessOrder = false;
+    }
+	
+	
+	
+	
+	
+	
+	

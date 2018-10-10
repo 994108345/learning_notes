@@ -1,0 +1,138 @@
+LinkedList的原理
+定义：是双向链表
+
+类结构：
+	public class LinkedList<E>
+		extends AbstractSequentialList<E>
+		implements List<E>, Deque<E>, Cloneable, java.io.Serializable
+
+成员变量：
+	size：存储数据数量
+	Node<E> first：双向链表的第一个节点
+	Node<E> last;：双向链表的最后一个节点
+	
+构造函数：
+	public LinkedList() {
+    }
+	
+	public LinkedList(Collection<? extends E> c) {
+        this();
+        addAll(c);
+    }
+链表结点：Node
+	Node<E> {
+        E item;//存的值
+        Node<E> next;//下一个结点
+        Node<E> prev;//上一个结点
+
+add()方法
+	public boolean add(E e) {
+        linkLast(e);
+        return true;
+    }
+	
+	void linkLast(E e) {
+        final Node<E> l = last;
+        /*创建结点，传入上一个结点，下一个结点，和该结点的值*/
+        final Node<E> newNode = new Node<>(l, e, null);
+        last = newNode;
+        /*判断l是否为null，来确认此事的链表是否意见有值，或者还是空*/
+        if (l == null)
+            first = newNode;
+        else
+            l.next = newNode;
+        size++;
+        modCount++;
+    }
+
+get()方法
+	public E get(int index) {
+        checkElementIndex(index);
+        return node(index).item;
+    }
+	
+	Node<E> node(int index) {
+		/*判断index是否的大于链表长度/2，如果是,从最后一个结点开始查找，如果不是从第一个开始查找，这样效率高*/
+        if (index < (size >> 1)) {
+            Node<E> x = first;
+            for (int i = 0; i < index; i++)
+                x = x.next;
+            return x;
+        } else {
+            Node<E> x = last;
+            for (int i = size - 1; i > index; i--)
+                x = x.prev;
+            return x;
+        }
+    }
+
+remove()方法	
+
+	remove(Object o)
+	
+	public boolean remove(Object o) {
+        if (o == null) {
+            for (Node<E> x = first; x != null; x = x.next) {
+                if (x.item == null) {
+                    unlink(x);
+                    return true;
+                }
+            }
+        } else {
+            for (Node<E> x = first; x != null; x = x.next) {
+                if (o.equals(x.item)) {
+                    unlink(x);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+	
+	E unlink(Node<E> x) {
+        // assert x != null;
+        final E element = x.item;
+        final Node<E> next = x.next;
+        final Node<E> prev = x.prev;
+
+        if (prev == null) {
+            first = next;
+        } else {
+            prev.next = next;
+            x.prev = null;
+        }
+
+        if (next == null) {
+            last = prev;
+        } else {
+            next.prev = prev;
+            x.next = null;
+        }
+
+        x.item = null;
+        size--;
+        modCount++;
+        return element;
+    }
+	
+	remove(int index)
+	
+	public E remove(int index) {
+        checkElementIndex(index);
+        return unlink(node(index));
+    }
+	
+双向链表的删除结点，不需要像ArrayList一样还需要移动结点，直接将关联属性已修改即可。
+	 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

@@ -1,0 +1,52 @@
+HashSet
+定义：重复的值，只会留一个。底层由HashMap实现。所以学习HashSet时，请先学习HashMap。
+
+类结构：
+	public class HashSet<E>
+    extends AbstractSet<E>
+    implements Set<E>, Cloneable, java.io.Serializable
+	
+成员变量：
+	HashMap<E,Object> map;
+	Object PRESENT = new Object();与备份映射中的对象相关联的虚拟值
+
+构造方法
+	因为基于HashMap，前四个构造都对应初始化了一个HashMap，对应着HashMap的四个构造方法。
+	public HashSet() {
+        map = new HashMap<>();
+    }
+	
+	public HashSet(Collection<? extends E> c) {
+        map = new HashMap<>(Math.max((int) (c.size()/.75f) + 1, 16));
+        addAll(c);
+    }
+	
+	public HashSet(int initialCapacity, float loadFactor) {
+        map = new HashMap<>(initialCapacity, loadFactor);
+    }
+	
+	public HashSet(int initialCapacity) {
+        map = new HashMap<>(initialCapacity);
+    }
+	这个构造方法基于LinkedHashMap
+	HashSet(int initialCapacity, float loadFactor, boolean dummy) {
+        map = new LinkedHashMap<>(initialCapacity, loadFactor);
+    }
+
+add()方法
+	/*调用的是HashMap的put()方法，key是e，value是PRESENT*/
+    /*如果e还未存入过map，那么map.put返回的是null，如果已经存在e,返回的是e对应的value，所以不等于null，*/
+    /*通过这种方式，及时e一样，在HashMap中，key一样的，只会定位到同一个链表的同一个结点上！，
+    所以后面的值会覆盖前面的值，所以拥有不会存在两个相同的key*/
+	public boolean add(E e) {
+        return map.put(e, PRESENT)==null;
+    }
+
+读取值
+	通过迭代器
+	Iterator itr = set.iterator();
+	
+	
+	
+
+

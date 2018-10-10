@@ -1,0 +1,16 @@
+exists
+	select * from A a where exists(select b.id from B b) 
+	
+in
+	select * from A a where a.id in(select b.id from B b) 
+	
+exists和in的区别
+
+	exists会先查主表，然后运行子查询，一个一个去匹配主表的信息
+		exists是对外表作loop，每次loop再对那表进行查询。
+		适合外表结果集比较小
+	in是先执行子查询，并将获得的结果列表存放在一个加了索引的临时表中。在执行子查询之前，系统先将主查询挂起，待子查询执行完毕，存放在临时表中以后再执行主查询
+		in 是把外表和内表作hash join
+		适合内外表结果集比较大
+		
+	全部会走索引的

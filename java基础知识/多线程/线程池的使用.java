@@ -2,7 +2,7 @@
 线程池的种类：
 	1.CachedThreadPool:
 		根据程序的运行需要去创建线程，它会为每一个任务添加一个新的线程，这边有一个超时机制，当空闲的线程超过60s内没有用到的话，就会被回收。缺点就是没有考虑到系统的实际内存大小。
-	2.SingleThreadExecutor:
+	2.SingleThreadPool:
 		就像线程数为1的FixedThreadPool,单线程去跑任务，不处理并发的操作，不会被回收。
 	3.FixedThreadPool:
 		创建可容纳固定数量线程的池子，响应的速度快，适合长期任务。

@@ -1,0 +1,200 @@
+public class TreeMap<K,V>
+    extends AbstractMap<K,V>
+    implements NavigableMap<K,V>, Cloneable, java.io.Serializable
+	
+1.无序，不允许重复（无序指元素顺序与添加顺序不一致） 
+2.TreeMap集合默认会对键进行排序，所以键必须实现自然排序和定制排序中的一种 
+3..底层使用的数据结构是二叉树，且是红黑树
+
+自然排序：
+	java所有的封装的基本数据类型Boolean、String、Integer......都继承了Comparable，并实现了ComparaTo方法，这个方法的实现就是自然排序。
+
+TreeMap的构造函数
+	1
+	public TreeMap() {
+        comparator = null;
+    }
+	创键空的TreeMap，采用自然排序
+	
+	2
+	public TreeMap(Comparator<? super K> comparator) {
+        this.comparator = comparator;
+    }
+	创建一个空的TreeMap，排序是根据comparator排序的，
+	
+	3
+	public TreeMap(Map<? extends K, ? extends V> m) {
+        comparator = null;
+        putAll(m);
+    }
+	创建一个新的TreeMap，m集合的值全部复制到TreeMap上，排序是用自然排序。运行时间的在n*log(n)时间内运行。
+	
+	4
+	public TreeMap(SortedMap<K, ? extends V> m) {
+        comparator = m.comparator();
+        try {
+            buildFromSorted(m.size(), m.entrySet().iterator(), null, null);
+        } catch (java.io.IOException cannotHappen) {
+        } catch (ClassNotFoundException cannotHappen) {
+        }
+    }
+	创建一个新的TreeMap，并将m的值全部复制到TreeMap上，排序用的是m中指定的排序。这个方法运行时间是在线性时间内。
+	
+TreeMap的put()方法
+
+	public V put(K key, V value) {
+        Entry<K,V> t = root;
+        /*如果此时的红黑树为null，即这是插入的第一个节点，直接设置为根节点*/
+        if (t == null) {
+            /*类型检查，不能为null*/
+            compare(key, key); // type (and possibly null) check
+
+            root = new Entry<>(key, value, null);
+            size = 1;
+            modCount++;
+            return null;
+        }
+        int cmp;
+        Entry<K,V> parent;
+        // split comparator and comparable paths
+        /*分裂比较器和可比路劲*/
+        Comparator<? super K> cpr = comparator;
+        if (cpr != null) {
+            /*循环红黑书，能匹配到key就替换value*/
+            do {
+                parent = t;
+                cmp = cpr.compare(key, t.key);
+                if (cmp < 0)
+                    t = t.left;
+                else if (cmp > 0)
+                    t = t.right;
+                else
+                    return t.setValue(value);
+            } while (t != null);
+        }
+        else {
+            if (key == null)
+                throw new NullPointerException();
+            Comparable<? super K> k = (Comparable<? super K>) key;
+            do {
+                parent = t;
+                cmp = k.compareTo(t.key);
+                if (cmp < 0)
+                    t = t.left;
+                else if (cmp > 0)
+                    t = t.right;
+                else
+                    return t.setValue(value);
+            } while (t != null);
+        }
+        Entry<K,V> e = new Entry<>(key, value, parent);
+        if (cmp < 0)
+            parent.left = e;
+        else
+            parent.right = e;
+        fixAfterInsertion(e);
+        size++;
+        modCount++;
+        return null;
+    }
+	如果使用自然排序，key不能为null，若为null会抱空指针的
+	如果是使用Comparator，能否为null可以自己在compare()方法里控制。
+	
+TreeMap的get()方法
+
+	public V get(Object key) {
+        Entry<K,V> p = getEntry(key);
+        return (p==null ? null : p.value);
+    }
+	TreeMap的get()倒是没什么奇特之处，只是要区别是自然排序和Comparator排序，根据不同的排序调用不同的比较方法去定位想要的数据。因为底层是红黑树，所以检索的速度相当快，时间复杂度为O(log(n))。
+	
+例子：
+	用默认自然排序：
+		Map treeMap = new TreeMap();
+        treeMap.put("1","1");
+        treeMap.put("2","2");
+        treeMap.put("7","7");
+        treeMap.put("3","3");
+        treeMap.put("8","8");
+        treeMap.put("4","4");
+        treeMap.put("5","5");
+        Set keySet = treeMap.keySet();
+        Iterator keyItr = keySet.iterator();
+        while(keyItr.hasNext()){
+            String key = (String)keyItr.next();
+            String value = (String)treeMap.get(key);
+            System.out.println(value);
+        }
+	输出结果：
+		1
+		2
+		3
+		4
+		5
+		7
+		8
+	
+	使用Comparator
+		public void comparatorTest(){
+			class DemoComparator implements Comparator<String>{
+				@Override
+				public int compare(String o1, String o2) {
+					if(o1.length()==o2.length() && o1.equals(o2)){
+						return 0;
+					}else if(o1.length()<o2.length()){
+						return 1;
+					}else{
+						return -1;
+					}
+				}
+			}
+			Map treeMap = new TreeMap(new DemoComparator());
+			treeMap.put("111","1");
+			treeMap.put("2","2");
+			treeMap.put("71","7");
+			treeMap.put("31111","3");
+			treeMap.put("8111","8");
+			treeMap.put("4111111","4");
+			treeMap.put("511111","5");
+			Set keySet = treeMap.keySet();
+			Iterator keyItr = keySet.iterator();
+			while(keyItr.hasNext()){
+				String key = (String)keyItr.next();
+				System.out.println("key:"+key);
+				String value = (String)treeMap.get(key);
+				System.out.println("value:"+value);
+			}
+		}
+		结果：
+			key:4111111,value:4
+			key:511111,value:5
+			key:31111,value:3
+			key:8111,value:8
+			key:111,value:1
+			key:71,value:7
+			key:2,value:2
+		简单的设计一个根据key字符串长度来排序的比较器。
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+

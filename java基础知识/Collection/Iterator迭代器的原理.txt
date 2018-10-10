@@ -1,0 +1,52 @@
+
+迭代器Iterator
+
+	迭代器类Iterator的一个公共接口，拥有三个方法
+
+	//是否还有值
+	boolean hasNext();
+
+	//返回下一个元素
+	E next();
+
+	//删除当前元素
+	void remove();
+
+Iterable
+
+	通常，我们实现迭代器不是直接实现Iterator类，而是实现Iterable类，在Itreable类中定义了itrator()方法返回一个迭代器Iterator，具体返回一个怎样的迭代器由子类自己决定。
+
+	public interface Iterable<T> {
+		Iterator<T> iterator();
+	}
+	
+ListIterator
+	boolean hasNext();	
+	
+	E next();
+	
+	//如何这个迭代器在相反方向有更多元素则返回true，
+	boolean hasPrevious();
+	
+	//返回列表中的前一个元素，并将光标向后移动
+	E previous();
+	
+	//回下一个元素的下标，如果此时迭代器在集合最末尾，会返回集合的size
+	int nextIndex();
+	
+	//返回前一个元素的下标
+	int previousIndex();
+	
+	void remove();
+	
+	void set(E e);
+	
+	//直接在元素前插入指定的元素
+	void add(E e);
+	
+	
+	
+	
+	
+	
+	

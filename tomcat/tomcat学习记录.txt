@@ -1,0 +1,7 @@
+配置多个tomcat要保证三个端口号不能重复
+	1.HTTP端口，默认8080
+		<Connector URIEncoding="UTF-8" connectionTimeout="60000" port="8080" protocol="HTTP/1.1" redirectPort="8443" useBodyEncodingForURI="true"/>
+	2.远程停服务端口，默认8005
+		<Server port="8005" shutdown="SHUTDOWN">
+	3.AJP端口，默认8009
+		<Connector port="8009" protocol="AJP/1.3" redirectPort="8443"/>
