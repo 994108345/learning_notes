@@ -27,7 +27,7 @@
 		
 2.lock和synchronized的区别
 	存在层次：synchronized是jvm层面上的，lock是一个类
-	锁的释放：sychronized的运行完同步代码即释放锁，lock在finally中必须师父，否则会造成线程死锁。
+	锁的释放：sychronized的运行完同步代码即释放锁，lock在finally中必须释放，否则会造成线程死锁。
 	锁的状态：sychronized无法判断，lock可以判断。
 	锁类型：sychronized有可重入，lock有不可中断，非公平。可重入，可判断，可公平
 	选哪个呢：suchronized少量同步，lock大量同步。

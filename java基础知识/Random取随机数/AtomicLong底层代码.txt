@@ -1,0 +1,88 @@
+AtomicLong定义：
+	在32位操作系统中，64位的long 和 double 变量由于会被JVM当作两个分离的32位来进行操作，所以不具有原子性。而使用AtomicLong能让long的操作保持原子型
+	所以平常用long的时候，多线程会造成设置值混乱，所以AtomicLong相当于Synchrnized的long。
+	
+类结构：
+	public class AtomicLong extends Number implements java.io.Serializable
+	
+成员变量
+	private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private static final long valueOffset;
+	static final boolean VM_SUPPORTS_LONG_CAS = VMSupportsCS8();
+	private volatile long value;
+	
+构造函数
+	public AtomicLong() {
+    }
+	
+	public AtomicLong(long initialValue) {
+        value = initialValue;
+    }
+	
+方法	
+	public final long get()：获取当前值
+
+	public final void set(long newValue)：设置当前值
+	
+	public final void lazySet(long newValue)：最终设置为给定的值
+	
+	public final long getAndSet(long newValue) ：设置成指定的值，返回旧的值
+	
+	public final boolean compareAndSet(long expect, long update)：如果当前值等于预期值（expected），就改成当前值
+	
+	public final boolean weakCompareAndSet(long expect, long update)：如果当前值等于预期值（expected），就改成当前值（调用的就是上诉方法）
+	
+	public final long getAndIncrement() :将当前值+1后返回
+	
+
+例子
+	用两个线程，每个线程给一个成员变量加10000次，
+	如果是原子操作，最后一个线程结束时，打印出20000，
+	如果不是原子操作，最后一个线程结束时，打印的是小于20000的值
+	让一个Long类型的数自增，因为不是原子操作，所以数据会混乱
+	AtomicLong类型的数组自增，因为是原子操作，最终的数据是正确的
+		
+public class Tools extends TestCase{
+
+    private static AtomicLong l =  new AtomicLong(0L);
+    private static Long ll = 0L;
+
+    @Test
+    public void testAtomicWithThreadTest() throws Throwable {
+
+        TestRunnable runner = new TestRunnable(){
+            @Override
+            public void runTest() throws Throwable {
+                for (int i = 0; i < 10000; i++) {
+                    l.incrementAndGet();
+                    ll++;
+                }
+                System.out.println(String.format("Long:%s,AtomicLong:%s",String.valueOf(ll),String.valueOf(l.get())));
+            }
+        };
+        TestRunnable[] run = new TestRunnable[2];
+        for (int i = 0; i < 2; i++) {
+            run[i] = runner;
+        }
+        // 用于执行多线程测试用例的Runner，将前面定义的单个Runner组成的数组传入
+        MultiThreadedTestRunner multithreadedtestrunner = new MultiThreadedTestRunner(run);
+        multithreadedtestrunner.runTestRunnables();
+    }
+}
+输出结果：
+Long:12464,AtomicLong:19461
+Long:13155,AtomicLong:20000
+
+
+
+
+
+
+
+
+
+
+
+
+
+

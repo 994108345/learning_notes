@@ -1,4 +1,12 @@
-该类已经被淘汰了，如果需要线程安全，使用ConcurrentHashMap
+主要实现内容和HashMap基本一样，
+	区别在于：
+		1 Hashtable不允许key和value出现null。如果出现会抱异常。
+		2 Hashtable的增删改查操作都是同步的，所以是线程安全的，而实现就是在所有公共方法都加上了synchronized关键字。
+		3 HashMap的扩容是*2，Hashtable的*2+1
+		4 HashMap的初始化长度为16.Hashtable初始化长度是11
+
+目前已经被淘汰了，如果需要线程安全，使用ConcurrentHashMap。
+
 类继承关系
 	public class Hashtable<K,V>
     extends Dictionary<K,V>
@@ -147,12 +155,7 @@ get key-value
 	
 	
 	
-主要实现内容和HashMap基本一样，
-	区别在于：
-		1 Hashtable不允许key和value出现null。如果出现会抱异常。
-		2 Hashtable的增删改查操作都是同步的，所以是线程安全的。
-		3 HashMap的扩容是*2，Hashtable的*2+1
-		4 HashMap的初始化长度为16.Hashtable初始化长度是11
+
 		
 		
 	

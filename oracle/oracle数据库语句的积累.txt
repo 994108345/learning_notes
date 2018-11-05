@@ -2,3 +2,6 @@
 	select * from all_tables
 导入dmp文件
 	imp 用户名/密码@监听器路径/数据库实例名称 file='d:\数据库文件.dmp' full=y ignore=y
+	
+在返回结果的最后一行合计
+	 select d.id,sum(d.ttl_qty) from mbwms_dgn d group by rollup(d.id)

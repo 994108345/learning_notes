@@ -1,3 +1,4 @@
+
 activeMq的消费默认是异步的，因为jms就是异步的。
 
 activeMq和jms的关系

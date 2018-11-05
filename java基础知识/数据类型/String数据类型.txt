@@ -1,0 +1,16 @@
+String
+
+	String类是final修饰的，不能被继承。
+
+String,StringBuilder,StringBuffer的区别
+
+	StringBuilder是非线性安全的
+
+	StringBuffer是线性安全的。
+
+	String类型的值修改值时，都是重新创建一个对象，而StringBuilder和StringBuffer是在原有的对象后面添加
+	
+StringBuilder为什么是线性安全的？
+	
+	因为StringBuilder的底层方法都加了Sychronized关键字
+		

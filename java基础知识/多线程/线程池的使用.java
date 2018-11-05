@@ -99,3 +99,11 @@ private static ExecutorService exe = Executors.newCachedThreadPool();
 返回结果为：pool-1-thread-5
 
 
+线程池方法
+
+	shutdown()：阻止新来的任务提交。
+	
+	shoutdownNow():阻止新来的任务提交，同时会中断当前正在运行的线程
+	
+	
+

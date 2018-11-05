@@ -1,0 +1,52 @@
+Random取随机数
+	Random random = new Random();
+	int intRandom = random.nextInt(2);
+	
+	定义：通过Random取到的随机数叫伪随机数，不可能达到真正的随机。
+	
+成员变量
+	private final AtomicLong seed;
+		在32位操作系统中，64位的long 和 double 变量由于会被JVM当作两个分离的32位来进行操作，所以不具有原子性。而使用AtomicLong能让long的操作保持原子型
+		
+	private static final long multiplier = 0x5DEECE66DL;
+    private static final long addend = 0xBL;
+    private static final long mask = (1L << 48) - 1;
+	
+构造函数
+	public Random() {
+        this(seedUniquifier() ^ System.nanoTime());
+    }
+	
+	public Random(long seed) {
+        if (getClass() == Random.class)
+            this.seed = new AtomicLong(initialScramble(seed));
+        else {
+            // subclass might have overriden setSeed
+            this.seed = new AtomicLong();
+            setSeed(seed);
+        }
+    }
+	
+	如果不传参，直接通过当前时间的纳秒级别算出种子。
+	有参，直接把传的参数当做种子。
+	
+	种子数只是随机算法的起源数字，和生成的随机数字的区间无关
+	
+	//取随机数的
+	protected int next(int bits) {
+        long oldseed, nextseed;
+        AtomicLong seed = this.seed;
+        do {
+            oldseed = seed.get();
+            nextseed = (oldseed * multiplier + addend) & mask;
+        } while (!seed.compareAndSet(oldseed, nextseed));
+        return (int)(nextseed >>> (48 - bits));
+    }
+	
+	
+	
+	
+	
+	
+	
+	

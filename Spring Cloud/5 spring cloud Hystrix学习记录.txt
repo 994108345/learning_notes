@@ -1,0 +1,117 @@
+Spring Cloud Hystrix
+
+定义：Hystrix叫做断路器，一种服务保护机制当服务出瘫痪时，当某个服务单元发生故障的时候，通过断路器的故障监控，向调用方法饭后一个错误响应，而不是长时间等待。这样就不会使线程因调度错误服务而得不到释放。
+
+原理分析
+	首先，创建HystrixCommand和HystrixObservableCommand对象
+	HystrixCommand和HystrixObservableCommand使用了命令模式
+		命令模式：将来自客户端的请求封装成一个对象，从而让你可以使用不同的请求对客户端进行参数化。它可以用于行为请求者和行为执行者解耦，以使两者都适应变化。
+		接下来简单介绍命令模式：
+		
+		HystrixCommand实现了下面两个执行方式：
+			execute:同步
+			queue:异步
+		HystrixObservableCommand：实现了另外两种方式
+			observe()：操作多个结果，返回Observable
+			toObservable()：也代表操作多个结果，返回的是一个Cold Observable
+		
+	使用了观察者-订阅模式
+		定义：
+		事件源（被观察者）：
+		观察者：
+		
+		Hot Observable：不论"事件源"是否有”订阅者“，都会在创建后对事件进行发布
+		Cold Observable：在没有订阅者的时候不会发布事件。
+		
+		依赖隔离：
+			舱壁模式：为每一个依赖服务创建一个单独的线程池，就算某个依赖服务出现延迟过高的情况，也不会对其他依赖服务造成影响。
+		
+		服务降级
+			调用服务出错或线程挂起时间太久，会触发服务降级，即fallback的错误响应。
+			
+	继续重写HystrixCommand，来控制断路器的逻辑
+	
+	@HystrixCommand(ignoreExceptions = {BadReques七Exception.class})
+	通过该注解可以赛选哪些异常不需要返回错误响应，如上就是无视BadReques七Exception异常
+	
+	命令名称、分组以及线程池的划分
+		清晰定义组名，区分线程池，反正线程池混乱使用
+		
+		Hystrix默认的线程划分是根据命令分组来实现的，默认情况下，Hystrix会让相同组名的命令使用同一个线程池，所以在创建Hystrix命令时，为其指令命令组名来实现默认的线程池划分。
+		
+	请求缓存
+		
+		重载getCacheKey()方法开启请求缓存
+			
+			protected String getCacheKey(){
+				return String.valueOf(id);//根据id缓存
+			}
+			
+		清理缓存数据：通过HystrixRequestCache.clear()方法
+		
+	请求合并
+		将多个请求合并成一个请求，减少请求次数。
+		
+		请求合并的额外开销
+			
+	仪表盘检测
+		@EnableHystrixDashboard，启用Hystrix Dashboard功能。
+		
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

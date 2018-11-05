@@ -1,0 +1,60 @@
+什么是Spring-boot
+	将一个独立的系统拆分成多个小型服务，服务之间通信基于HTTP的restful api进行通信写作。
+	
+Spring-Cloud的优缺点
+	优点：
+		服务组件化：各服务可以快速升级。
+		可以按业务组织团队：
+		去中心化处理：各个服务，尽量解耦
+		使用Http的RestFul请求模式
+	缺点：
+		运维的新挑战：进程数量大大增加
+		接口的一致性：修改其中一个接口时，与其相关联的服务都要修改调用的接口
+		分布式的复杂性：服务更多，所以分布式会更复杂，比如网络延迟，分布式事务等等
+		
+Spring-cloud一般基于Spring-boot框架
+	
+	spring-boot的定义：
+		通过大量自动化的配置方式来简化spring原有样板化的配置，使得开发者可以快速构建应用。
+
+创建第一个最简单的spring-cloud + spring-boot项目
+
+	例子采用Spring-boot 2.0.3 和Spring-cloud Finchley.RELEASE版本
+
+	首先建立父模块，父模块的pom文件导入
+	
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.0.3.RELEASE</version>
+	</parent>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>Finchley.RELEASE</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+	写一半死机啦！
+		

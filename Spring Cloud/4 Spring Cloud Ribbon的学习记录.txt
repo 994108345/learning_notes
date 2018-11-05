@@ -1,0 +1,109 @@
+定义：Spring Cloud Ribbon是一个基于HTTP和TCP的客户端均衡负载工具，它基于Netflix Ribbon实现的。
+
+客户端的均衡负载
+	
+	客户端复杂均衡和服务端负载均衡最大的不同点在于：服务清单所存储的位置
+	
+		客户端负载均衡中：所有的客户端结点都维护者自己要访问的服务端清单，而这些服务端的清单来自于服务注册中心。
+
+RestTimplate详解
+	
+	Get请求
+	
+		ResponseEntity<String> responseEntity=restTemplate.getForEntity("http://USER­SERVICE/user?name =  { 1} ", String. class, "didi") ;
+		ResponseEntity存储了Http的几个重要元素，比如请求状态httpStatus，请求头信息HttpHeaders
+		
+		getForEntity(String url, Class responseType, Object ... urlVariables):
+		
+		getForEntity(String url, Class responseType, Map urlVariables):
+		
+		getForEntity(UR工 url, Class responseType):
+		
+		getForObject (String url, Class responseType, Object. .. urlVariables)
+		 
+	POST
+
+	PUT
+		put(String url, Objec七 request, Object ... urlVariables)
+		put(S七ring url, Objec七 request, Map urlVariables)
+		put(URI url, Objec七 request)
+		
+	DELETE
+		delete(String url, Object ... urlVariables)
+		delete(String url, Map urlVariables)
+		delete(URI url)
+
+
+
+源码分析
+	用@LoadBalanced注解给RestTemplate做标记，
+	运行的时候用LoadBalancerIntereptor拦截RestTemplate发起的HTTP请求，通过url去调用均衡负载类，匹配到对应的Region下的Zone。找到独有的服务端的结点信息，调用
+
+
+负载均衡策略
+	Random Rule：随机
+	
+	RoundRobinRule：顺序选择
+	
+	RetryRule：具备重试机制的实例选择功能,实际也是顺序选择的
+	
+	ClientConfigEnabledRoundRobinRule：该策略特殊，我们不直接用，其他策略会继承他，在它的基础上实现更高级的策略
+	
+	Weighted Response TimeRule：根据权重挑选
+	
+	BestAvailableRule：选出最空闲的实例，即被请求次数最少的
+
+	PredicateBasedRule：先过来一部分实例，在用线性轮询的方式找实例
+	
+	Availab仆ityFilteringRule：先以线性选择一个实例，接着用过滤的条件来判断实例是否满足要求，若满足就用该实例
+	
+	ZoneAvoidanceRule：多次过滤
+
+重试机制
+	
+	Spring-cloud-Eureka将就CAP中的Ap，即可用性和可靠性
+	Zookeeper强调了CP一致性和可靠性
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,95 @@
+java的动态代理
+
+	java的动态代理分为JDK代理和CGLIB代理 。
+	
+JDK代理和CGLIB代理的区别
+	JDK代理的实现类必须有接口，代理类实现InvocationHandler接口，重写bind和invoke方法。
+	CGLIB代理的实现类不能有接口，且不能final修饰。代理类实现MethodInterceptor接口，重写getInstance和intercept方法。
+	
+JDK代理源码分析
+/* loader:实现类加载器
+ * interfaces:实习那类的实例
+ * h: 代理类调用者
+ */
+@CallerSensitive
+    public static Object newProxyInstance(ClassLoader loader,
+                                          Class<?>[] interfaces,
+                                          InvocationHandler h)
+        throws IllegalArgumentException
+    {
+		//判断调用者不能为空
+        Objects.requireNonNull(h);
+		//克隆了一个实现类对象
+        final Class<?>[] intfs = interfaces.clone();
+		//因为使用了类加载器，所以可能涉及安全问题，就需要使用java安全管理器SecurityManager，如果当前操作是安全的，会返回一个非null对象，如果是不安全的，就会返回一个null对象。
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+			//检查创建代理类所需的权限
+            checkProxyAccess(Reflection.getCallerClass(), loader, intfs);
+        }
+
+        /*
+         * Look up or generate the designated proxy class.
+         */
+		 //生成一个代理类（我理解的实现类）。在调用此方法之前，必须调用checkProxyAccess方法来执行权限检查。
+		 //这个代理类是新生成的，继承了我们的实现类，实现了我们的接口。
+        Class<?> cl = getProxyClass0(loader, intfs);
+
+        /*
+         * Invoke its constructor with the designated invocation handler.
+         */
+		 //用指定的调用解析器调用这个构造函数
+        try {
+            if (sm != null) {
+				//检查创建的代理类对象的权限
+                checkNewProxyPermission(Reflection.getCallerClass(), cl);
+            }
+			//constructorParams是代理类的构造函数的参数，这里获取代理类的构造函数。
+            final Constructor<?> cons = cl.getConstructor(constructorParams);
+            final InvocationHandler ih = h;
+			//判断代理类的修饰符是否为public。
+            if (!Modifier.isPublic(cl.getModifiers())) {
+                AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    public Void run() {
+                        cons.setAccessible(true);
+                        return null;
+                    }
+                });
+            }
+			//直接通过代理对像的构造函数生存一个实例对象
+            return cons.newInstance(new Object[]{h});
+        } catch (IllegalAccessException|InstantiationException e) {
+            throw new InternalError(e.toString(), e);
+        } catch (InvocationTargetException e) {
+            Throwable t = e.getCause();
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else {
+                throw new InternalError(t.toString(), t);
+            }
+        } catch (NoSuchMethodException e) {
+            throw new InternalError(e.toString(), e);
+        }
+    }
+	
+JDK代理步骤
+
+	1 生存一个代理类去实现我们的接口，又去继承了我们的实习类，在构造方法中，调用父类的构造方法。
+	
+	2 重写代理类方法的时候，加上了this.h.invoke(this, m3, new Object[] { paramString });  调用了invoke方法。
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+	

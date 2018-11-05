@@ -1,0 +1,6 @@
+Spring Cloud Feign
+
+定义：整合了Spring cloud Ribbon和Spring cloud Hystrix，还提供了声明式web服务客户端定义方式。
+
+快速入门
+	

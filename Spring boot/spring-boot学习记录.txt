@@ -14,8 +14,14 @@ Spring boot
 		
 		提供POM，简化Maven配置
 		
-		
-		
+Spring-boot 使用jpa
+
+	继承JpaRepository类
+	JPA提供了一些自定义声明方法的规则，例如，在接口中使用关键字findBy、readyBy、getBy作为方法名的前缀，拼接实体类中的属性字段（首个字母大写）
+	
+	@EnableTransactionManagement启用了JPA的事务管理:
+	@EnableJpaRepositories启用了JPA资源库并指定了上面定义的接口资源库的位置
+	@EntityScan指定了定义实体的位置，他将导入我们定义的实体
 	
 	
 	

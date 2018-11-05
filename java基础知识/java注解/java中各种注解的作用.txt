@@ -1,0 +1,62 @@
+@Target
+	@Target(ElementType)
+	该注解指明注解类标注的位置，ElementType是个枚举类。枚举了各种位置
+	TYPE,//注解在Class上
+
+    FIELD,//注解在字段上
+	
+    METHOD,//注解在方法上
+
+    PARAMETER,//注解在参数上
+
+    CONSTRUCTOR,//注解在构造函数上
+
+    LOCAL_VARIABLE,//注解在局部变量声明
+
+    ANNOTATION_TYPE,//注解在注解类型声明上
+
+    PACKAGE,//注解在包声明上
+
+    TYPE_PARAMETER,//注解咋类型参数声明上
+
+    TYPE_USE//注解在用户类名声明上
+	
+@Retention
+	Retention(保留)注解说明,这种类型的注解会被保留到那个阶段. 有三个值
+	1.RetentionPolicy.SOURCE —— 这种类型的Annotations只在源代码级别保留,编译时就会被忽略
+	2.RetentionPolicy.CLASS —— 这种类型的Annotations编译时被保留,在class文件中存在,但JVM将会忽略
+	3.RetentionPolicy.RUNTIME —— 这种类型的Annotations将被JVM保留,所以他们能在运行时被JVM或其他使用反射机制的代码所读取和使用.
+	
+@Documented
+	Documented 注解表明这个注解应该被 javadoc工具记录. 默认情况下,javadoc是不包括注解的. 但如果声明注解时指定了 @Documented,则它会被 javadoc 之类的工具处理, 所以注解类型信息也会被包括在生成的文档中
+	
+@Impoet
+	用于依赖第三方包中bean的配置和加载。
+	
+@@Inherit
+	如果注解类的子类想获取父类的注解信息，必须在父类上加锁@Inherit。
+	
+@CallerSensitive
+	这个注解是为了堵住漏洞用的。原理是当时反射只检查固定深度的调用者的类，看它有没有特权，例如固定看两层的调用者（getCallerClass(2)）。如果我的类本来没足够权限群访问某些信息，那我就可以通过双重反射去达到目的：反射相关的类是有很高权限的，而在 我->反射1->反射2 这样的调用链上，反射2检查权限时看到的是反射1的类，这就被欺骗了，导致安全漏洞。使用CallerSensitive后，getCallerClass不再用固定深度去寻找actual caller（“我”），而是把所有跟反射相关的接口方法都标注上CallerSensitive，搜索时凡看到该注解都直接跳过，这样就有效解决了前面举例的问题
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

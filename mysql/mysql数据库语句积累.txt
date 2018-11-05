@@ -39,4 +39,11 @@
 	WHERE table_schema = '[database_name]';
 	[database_name]为你的数据库名字。
 	
+limit
+	select * from user limit A,B;注意看，没有where关键字， A为起始位置，但是不包含起始位置，B为偏移位置。
+	
+升序降序
+	默认ASC升序
+	desc降序
+	
 	

@@ -1,4 +1,4 @@
-LinkedHashSet基于LinkedHashMap，所以性质和LinkedHashMap差不多，LinkedHashSet采用适配器模式。。
+LinkedHashSet基于LinkedHashMap，所以性质和LinkedHashMap差不多
 
 适配器模式
 	LinkedHashSet继承HashSet，HashSet中有一个成员变量HashMap map；
@@ -47,7 +47,9 @@ LinkedHashSet基于LinkedHashMap，所以性质和LinkedHashMap差不多，Linke
 	public LinkedHashMap(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);
         accessOrder = false;
-    }
+    }无法修改accessOrder参数
+	
+所有的公共对外操作都是使用LinkedHashMap的方法！
 	
 	
 	

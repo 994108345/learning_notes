@@ -1,0 +1,38 @@
+1 测试的类继承TestCase
+2 测试的方法名必须是test开头
+3 使用TestRunnable创建线程类
+4 使用MultiThreadedTestRunner运行多线程，这个类需要导包，导包语句如下：
+	<dependency>
+		<groupId>net.sourceforge.groboutils</groupId>
+		<artifactId>groboutils-core</artifactId>
+		<version>5</version>
+		<scope>test</scope>
+	</dependency>
+
+
+public class Tools extends TestCase{
+
+    private static AtomicLong l =  new AtomicLong(0L);
+
+    @Test
+    public void testAtomicWithThreadTest() throws Throwable {
+
+        TestRunnable runner = new TestRunnable(){
+            @Override
+            public void runTest() throws Throwable {
+                for (int i = 0; i < 1000; i++) {
+                    l.incrementAndGet();
+                }
+                System.out.println(l.get());
+            }
+        };
+        TestRunnable[] run = new TestRunnable[2];
+        for (int i = 0; i < 2; i++) {
+            run[i] = runner;
+        }
+        // 用于执行多线程测试用例的Runner，将前面定义的单个Runner组成的数组传入
+        MultiThreadedTestRunner multithreadedtestrunner = new MultiThreadedTestRunner(run);
+        multithreadedtestrunner.runTestRunnables();
+    }
+}
+
