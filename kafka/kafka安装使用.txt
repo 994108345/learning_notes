@@ -1,0 +1,52 @@
+1 下载解压包
+	官网：http://kafka.apache.org/quickstart
+	
+2 启动
+	kafka基于zookeeper
+	要先启动zookeeper，然后进入kafka目录运行
+	window:bin/windows/kafka-server-start.bat config/server.properties
+	linux:bin/kafka-server-start.sh config/server.properties
+	
+3 创建主题
+	bin/windows/kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+	创建一个test主题
+	
+4 发布消息
+	bin/windows/kafka-console-producer.bat --broker-list localhost:9092 --topic topic
+	
+5 消费信息
+	bin/windows/kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic backTest --from-beginning
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	bin/windows/kafka-server-start.bat -daemon config/server.properties
+	
+	bin/kafka-server-start.bat -daemon config/server.properties
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

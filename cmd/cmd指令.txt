@@ -6,3 +6,6 @@
 
 3.查看本机端口号
 	ipconfig /all
+	
+4.设置当前cmd编码格式为utf-8
+	chcp 65001

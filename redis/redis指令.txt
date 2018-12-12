@@ -43,7 +43,7 @@ redis的数据类型
 	STRLEN key_name;返回 key 所储存的字符串值的长度。
 	MSET key1 value1 key2 value2;设置多个键值对
 	MSETNX key1 value1 key2 value2：同时设置一个或多个 key-value 对，当且仅当所有给定 key 都不存在。
-	PSETEX key milliseconds value：创建一个有生存时间的key，这个命令和 SETEX 命令相似，但它以毫秒为单位设置 key 的生存时间。
+	PSETEX key milliseconds keyvalue：创建一个有生存时间的key，这个命令和 SETEX 命令相似，但它以毫秒为单位设置 key 的生存时间。
 	INCR key：将 key 中储存的数字值增一。
 	INCRBY key increment：将 key 所储存的值加上给定的增量值（increment） 。
 	INCRBYFLOAT key increment：将 key 所储存的值加上给定的浮点增量值（increment） 。

@@ -1,0 +1,40 @@
+java单元测试的目的
+	减小联调时的时间，增加代码的健壮性。在开发时越早发现BUG，就能节省更多的时间，降低更多的风险。
+
+优点：
+	它是一种验证行为。
+	它是一种设计行为。
+	它是一种编写文档的行为。
+	它具有回归性。
+	
+mock单元测试
+	@Mock
+    private TradeOrderService tradeOrderService;
+
+    @InjectMocks
+    private PayService payService = new PayServiceImpl();
+
+    @Before
+    public void setUp(){
+        //初始化被@Mock注解修饰过的组件
+        MockitoAnnotations.initMocks(this);
+    }
+	
+	@Test
+    public void  prePay1(){
+        //step 1 准备数据与动作 预期结果
+        TokenBoResult tokenBoResult = new TokenBoResult();
+        ResultUtil.setError(tokenBoResult);
+
+        //step 2 mock  URL Object Class
+
+        //step 3 运行待测试模块
+        /*请求参数*/
+        TradeOrderBOParam requestParam = new TradeOrderBOParam();
+        requestParam.setOutTradeNo(null);
+        TokenBoResult result = payService.prePay(requestParam);
+        //step 4 验证测试结果
+        System.out.println(String.format("返回信息是：%S,返回状态是：%d",result.getMessage(),result.getStatus()));
+        Assert.assertTrue("返回结果",ResultUtil.isError(result));
+        Assert.assertEquals("返回信息", "外部订单号不能为空", result.getMessage());
+    }

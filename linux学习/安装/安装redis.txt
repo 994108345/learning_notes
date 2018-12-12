@@ -1,0 +1,38 @@
+linux安装redis：
+	https://blog.csdn.net/chinesepython/article/details/82388969
+
+	
+1.启动：redis-server（redis-server redis.conf）
+
+2.登陆：redis-cli（redis-cli -p 6379）
+
+3.关闭：redis-cli shutdown
+
+linux安装jdk
+	https://www.cnblogs.com/Dylansuns/p/6974272.html
+	
+linex安装zk
+	https://blog.csdn.net/psy1100/article/details/51160281
+	
+linex 安装kafka
+	https://blog.csdn.net/zhuyouyong/article/details/78921676
+	
+	启动服务：
+		bin/kafka-server-start.sh config/server.properties
+	
+	创建主题：
+		让我们创建一个名为“test”的主题，它只有一个分区和一个副本:
+		bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
+	
+	查看主题
+		bin/kafka-topics.sh --list --zookeeper localhost:2181
+		
+	消费主题
+		bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning
+
+linux安装mysql
+	https://www.cnblogs.com/zhuyp1015/p/3561470.html
+	
+	
+
+
