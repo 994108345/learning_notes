@@ -1,0 +1,40 @@
+kafka配置
+	spring:
+		kafka:
+			bootstrap-servers: 47.104.240.104:9092
+			consumer:
+			  group-id: sbc-redis-kafka-consumer
+			  # 如果Kafka中没有初始偏移量，或者服务器上不再存在当前偏移量(例如，因为数据已被删除)，该怎么办:
+			  # earliest:自动重置偏移到最早的偏移(当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，从头开始消费)
+			  # latest:自动将偏移量重置为最新偏移量(当各分区下有已提交的offset时，从提交的offset开始消费；无提交的offset时，消费新产生的该分区下的数据)
+			  # none:如果没有为使用者的组找到以前的偏移量，则向使用者抛出异常(topic各分区都存在已提交的offset时，从offset后开始消费；只要有一个分区不存在已提交的offset，则抛出异常)
+			  # anything:向使用者抛出异常。
+			  auto-offset-reset: earliest
+			  #键的反序列器所序列化类
+			  key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+			  #值的反序列化器的序列化类
+			  value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+			producer:
+			  #用于建立到Kafka集群的初始连接的主机/端口对列表。
+			  #客户机将使用所有服务器，而不管这里为引导指定了哪些服务器——这个列表只影响用于发现完整服务器集的初始主机。
+			  #这个列表应该host1形式:端口1,host2:端口2,....由于这些服务器仅用于发现完整集群成员关系的初始连接(可能会动态更改)，
+			  #因此此列表不需要包含完整的服务器集(但是，如果服务器宕机，您可能需要多个服务器)。
+			  bootstrap-servers: 192.168.1.222:9092
+			  #键的反序列器所序列化类
+			  key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+			  #值的反序列化器的序列化类
+			  value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+			  #设置批处理大小。当多个记录被发送到同一个分区时，生产者将尝试批处理成更少的请求。
+			  #这有助于客户机和服务器上的性能。此配置控制以字节为单位的默认批处理大小。
+			  batch-size: 65536 #64KB
+			  #生产者可以用来缓冲等待发送到服务器的记录的总内存字节。如果记录发送的速度比发送到服务器的速度快，则生成器将阻塞max.block。然后它会抛出一个异常。
+			  #此设置应大致对应生成器将使用的总内存，但不是硬边界，因为生成器使用的并非所有内存都用于缓冲。一些额外的内存将用于压缩(如果启用了压缩)以及维护运行中的请求。
+			  buffer-memory: 524288 #512kb
+	
+kafka专业名词
+	Broker：Kafka 集群包含一个或多个服务器，这种服务器被称为 broker。
+	Topic：每条发布到 Kafka 集群的消息都有一个类别，这个类别被称为 Topic。（物理上不同 Topic 的消息分开存储，逻辑上一个 Topic 的消息虽然保存于一个或多个 broker 上，但用户只需指定消息的 Topic 即可生产或消费数据而不必关心数据存于何处）。
+	Partition：Partition 是物理上的概念，每个 Topic 包含一个或多个 Partition。
+	Producer：负责发布消息到 Kafka broker。
+	Consumer：消息消费者，向 Kafka broker 读取消息的客户端。
+	Consumer Group：每个 Consumer 属于一个特定的 Consumer Group（可为每个 Consumer 指定 group name，若不指定 group name 则属于默认的 group）。

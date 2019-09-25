@@ -45,6 +45,13 @@ ListIterator
 	void add(E e);
 	
 	
+快速失败（fail-fast）
+	当一个线程用集合使用迭代器循环时，另一个线程试图修改这个迭代器数据时，会触发fail-fast，立即抛出异常Concurrent Modification.Exception
+安全失败（fail—safe）
+	当一个线程用集合使用迭代器循时，会先复制当前迭代器的内容，用这份复制的内容循环，所以修改迭代器的内容时不会抛出异常Concurrent Modification.Exception。
+	缺点就是在循环复制内容的时候，无法知道此时被修改的迭代器的内容。
+	场景：java.util.concurrent包下的容器都是安全失败，可以在多线程下并发使用，并发修改。
+	
 	
 	
 	

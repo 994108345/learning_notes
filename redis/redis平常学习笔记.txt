@@ -1,0 +1,6 @@
+redis的Set的排序问题
+	redis中，集合的编码有两种。intset(整数编码)和hashtable(哈希表)
+		intset编码是按照数字从大到小的顺序排序的
+		hashtable编码是按照哈希算法随机排序的
+		
+	集合中的所有元素都是数字才会使用intset，一旦有一个非数字的元素，就会变成hashtable编码。

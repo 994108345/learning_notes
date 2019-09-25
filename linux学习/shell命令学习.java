@@ -486,4 +486,16 @@ top：查看所有进程
 
 　　9、*.zip 用 unzip 解压
 
+
+根据线程pid查看占用的端口号
+	 netstat -nap | grep 8223
+根据进程号查询项目
+	 ps -ef| grep 369
+
+	 
+查询文件名：
+	find -name 'dump.rdb*'
+	
+test的时间调整：ntpdate -u asia.pool.ntp.org
+
 	

@@ -5,6 +5,9 @@
 	打来一个命令窗口，在redis安装的文件夹内：执行：redis-server.exe redis.windows.conf不要关闭这个窗口
 	打来另外一个命令窗口：同样进入redis安装的文件夹内；执行redis-cli,xex -h 127.0.0.1 -p 6379
 	
+redis客户端出现乱码
+	redis-cli --raw
+	
 redis的数据类型
 	String字符串：SET name "abc" 。get name
 	Hash哈希:适合存放对象：hmset myhash user1 "111" user2 "222"。hget myhash user1
@@ -128,6 +131,7 @@ redis的数据类型
 		ZSCORE key member :返回有序集中，成员的分数值
 		ZUNIONSTORE destination numkeys key [key ...] :计算给定的一个或多个有序集的并集，并存储在新的 key 中
 		ZSCAN key cursor [MATCH pattern] [COUNT count] :迭代有序集合中的元素（包括元素成员和元素分值）
+		
 		HyperLogLog
 		统计基数的算法。计算空间固定12kb。只根据谁的元素计算基数，而不会存储元素本身，所以 HyperLogLog 不能像集合那样，返回输入的各个元素。
 		基数就是不重复的数的个数

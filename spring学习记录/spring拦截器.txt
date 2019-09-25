@@ -1,0 +1,5 @@
+Spring拦截器
+	各种拦截器：https://www.cnblogs.com/littleatp/p/9496009.html
+	@Pointcut用法:https://blog.csdn.net/qq_15037231/article/details/78159456
+	
+其他模块加载了使用拦截器模块，拦截器模块必须放在pom文件的最下方。因为必须让该模块先加载自己需要的业务模块后，再加拦截器
