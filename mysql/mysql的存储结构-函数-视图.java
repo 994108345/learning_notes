@@ -56,6 +56,7 @@ mysql的存储过程-存储函数-视图
     call pro_test03(
     #{id}
     )
+	<select>
 	
 	1.4.1.2 out的例子
 	delimiter $

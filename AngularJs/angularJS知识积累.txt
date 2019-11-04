@@ -6,3 +6,6 @@ angular的双向数据绑定采用什么机制
 	
 缺点：检测的太多，性能不是很好，缓存了很多东西。页面很难实现较复杂的页面。
 
+时间处理：
+{{ data.createTime | date:'yyyy-MM-dd HH:mm:ss' }}
+

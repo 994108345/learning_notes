@@ -1,0 +1,2 @@
+1 自增id归零
+ alter table 表名 AUTO_INCREMENT = 0;
