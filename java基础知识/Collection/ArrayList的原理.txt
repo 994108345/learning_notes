@@ -122,22 +122,3 @@ ArrayList的remove()方法。
         /*返回删除的值*/
         return oldValue;
     }
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
